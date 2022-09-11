@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from turtle import distance
 from game import Agent
 from game import Actions
 from game import Directions
@@ -62,10 +63,19 @@ class DirectionalGhost( GhostAgent ):
 
         actionVectors = [Actions.directionToVector( a, speed ) for a in legalActions]
         newPositions = [( pos[0]+a[0], pos[1]+a[1] ) for a in actionVectors]
-        pacmanPosition = state.getPacmanPosition()
+        # pacmanPosition = state.getPacmanPosition()
+        pacmanPositions = state.getPacmanPositions(state.data.numPacman, ignore=state.data.deadPacmans)
+
+        # updated distances to pacman for multiple pacmans
+        # the distance corresponding to each legal action is
+        # the min distance from all pacmans
+        distancesToPacman = []
+        for pos in newPositions:
+            min_distance = min([manhattanDistance(pos, pacmanPosition) for pacmanPosition in pacmanPositions])
+            distancesToPacman.append(min_distance)
 
         # Select best actions given the state
-        distancesToPacman = [manhattanDistance( pos, pacmanPosition ) for pos in newPositions]
+        # distancesToPacman = [manhattanDistance( pos, pacmanPosition ) for pos in newPositions]
         if isScared:
             bestScore = max( distancesToPacman )
             bestProb = self.prob_scaredFlee
