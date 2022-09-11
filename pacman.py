@@ -366,12 +366,11 @@ class PacmanRules:
         #print state.getPacmanPositions(pacmanInfo['numPacman'])
         agentIndex = pacmanInfo['agentIndex']
         trgPacmanState = state.getPacmanState(agentIndex)
+        # otherPacmanPositions should ignore current pacman
+        # and dead pacmans
         otherPacmanPositions = state.getPacmanPositions(pacmanInfo['numPacman'],\
-                                                        ignore=[ agentIndex ])
+                                                        ignore=[ agentIndex ] + state.data.deadPacmans)
         return Actions.getMASPossibleActions( trgPacmanState.configuration, otherPacmanPositions, state.data.layout.walls )
-        
-        # !!!!! ---- ALERT ALERT ALERT ---- !!! state.getPacmanState has default agentIndex=0
-        # First fix applyAction then use getMASPossibleActions
         #return Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
     getLegalActions = staticmethod( getLegalActions )
 
@@ -616,6 +615,7 @@ def readCommand( argv ):
     pacmanType = loadAgent(options.pacman, noKeyboard)
     pacman1Type = loadAgent(options.pacman, noKeyboard)
     pacman2Type = loadAgent(options.pacman, noKeyboard)
+    pacman3Type = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -623,12 +623,15 @@ def readCommand( argv ):
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
+    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
+    pacman3.index = 2
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3]
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
+    pacman3.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:

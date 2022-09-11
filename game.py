@@ -363,10 +363,6 @@ class Actions:
             next_x = x_int + dx
             if not walls[next_x][next_y] and (next_x, next_y) not in otherPacmanPositions: 
                 possible.append(dir)
-                # minor test to check collision prevention when
-                # only 2 pacmans run in the simulation
-                if next_x==otherPacmanPositions[0][0] and next_y==otherPacmanPositions[0][1]:
-                    raise Exception("collision prevention mechanism failed !")
 
         return possible
 
@@ -647,7 +643,7 @@ class Game:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
             positions = self.state.getPacmanPositions(self.numPacman)
-            print positions
+            print positions, self.state.data.deadPacmans
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
