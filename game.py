@@ -403,6 +403,7 @@ class GameStateData:
             self.layout = prevState.layout
             self._eaten = prevState._eaten
             self.score = prevState.score
+            self.numPacman = prevState.numPacman
 
         self._foodEaten = None
         self._foodAdded = None
@@ -411,7 +412,7 @@ class GameStateData:
         self._lose = False
         self._win = False
         self.scoreChange = 0
-        self.deadPacmans = [] 
+        self.deadPacmans = []
 
     def deepCopy( self ):
         state = GameStateData( self )
@@ -515,6 +516,7 @@ class GameStateData:
         self.layout = layout
         self.score = 0
         self.scoreChange = 0
+        self.numPacman = layout.numPacman
 
         self.agentStates = []
         numGhosts = 0
