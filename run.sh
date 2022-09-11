@@ -1,1 +1,1 @@
-python pacman.py -p ProximityAgent -n 20 -a proxi_dist=2,escape_sys=2 -q -g DirectionalGhost -l mas2
+python pacman.py -p ProximityAgent -n 20 -a proxi_dist=2,escape_sys=2 -q -g DirectionalGhost -l mas3
