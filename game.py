@@ -403,6 +403,7 @@ class GameStateData:
             self.layout = prevState.layout
             self._eaten = prevState._eaten
             self.score = prevState.score
+            self.scores = prevState.scores
             self.numPacman = prevState.numPacman
 
         self._foodEaten = None
@@ -506,7 +507,7 @@ class GameStateData:
             return '3'
         return 'E'
 
-    def initialize( self, layout, numGhostAgents ):
+    def initialize( self, layout, nteams, numGhostAgents ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
@@ -515,6 +516,7 @@ class GameStateData:
         self.capsules = layout.capsules[:]
         self.layout = layout
         self.score = 0
+        self.scores = [0]*nteams # scores[i] -> score for team-i
         self.scoreChange = 0
         self.numPacman = layout.numPacman
 
@@ -542,6 +544,7 @@ class Game:
         self.agentCrashed = False
         self.agents = agents
         self.mas_agents = mas_agents
+        self.team_map = {i : mas_agents[i].team for i in range(numPacman)}
         self.numPacman = numPacman
         self.display = display
         self.rules = rules
@@ -645,7 +648,7 @@ class Game:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
             positions = self.state.getPacmanPositions(self.numPacman)
-            print positions, self.state.data.deadPacmans
+            print positions, self.state.data.deadPacmans, self.state.data.scores
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
@@ -724,7 +727,7 @@ class Game:
             else:
                 #print "curr = " + str(agentIndex)
                 isPacman = agentIndex < self.numPacman
-                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True}
+                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team}
                 action = agent.getAction(observation, pacmanInfo)
             self.unmute()
 
@@ -739,11 +742,9 @@ class Game:
                     self.unmute()
                     return
             else:
-                #print "before: "+str(self.state.data.deadPacmans)
-                self.state = self.state.generateSuccessor( agentIndex, action, self.numPacman, self.state.data.deadPacmans, pacmanInfo )
-                #print "after: "+str(self.state.data.deadPacmans)
-                #print ""
+                self.state = self.state.generateSuccessor( agentIndex, action, self.numPacman, self.state.data.deadPacmans, pacmanInfo, self.team_map )
 
+            #print self.state.data.scores
             # Change the display
             self.display.update( self.state.data )
             ###idx = agentIndex - agentIndex % 2 + 1
