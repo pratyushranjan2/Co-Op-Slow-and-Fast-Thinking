@@ -15,7 +15,6 @@
 """
 Pacman.py holds the logic for the classic pacman game along with the main
 code to run a game.  This file is divided into three sections:
-
   (i)  Your interface to the pacman world:
           Pacman is a complex environment.  You probably don't want to
           read through all of the code we wrote to make the game runs
@@ -23,19 +22,16 @@ code to run a game.  This file is divided into three sections:
           that you will need to understand in order to complete the
           project.  There is also some code in game.py that you should
           understand.
-
   (ii)  The hidden secrets of pacman:
           This section contains all of the logic code that the pacman
           environment uses to decide who can move where, who dies when
           things collide, etc.  You shouldn't need to read this section
           of code, but you can if you want.
-
   (iii) Framework to start a game:
           The final section contains the code for reading the command
           you use to set up the game, then starting up a new game, along with
           linking in all the external parts (agent functions, graphics).
           Check this section out to see all the options available to you.
-
 To play your first game, type 'python pacman.py' from the command line.
 The keys are 'a', 's', 'd', and 'w' to move (or arrow keys).  Have fun!
 """
@@ -60,14 +56,11 @@ class GameState:
     """
     A GameState specifies the full game state, including the food, capsules,
     agent configurations and score changes.
-
     GameStates are used by the Game object to capture the actual state of the game and
     can be used by agents to reason about the game.
-
     Much of the information in a GameState is stored in a GameStateData object.  We
     strongly suggest that you access that data via the accessor methods below rather
     than referring to the GameStateData object directly.
-
     Note that in classic Pacman, Pacman is always agent 0.
     """
 
@@ -100,7 +93,7 @@ class GameState:
         else:
             return GhostRules.getLegalActions( self, agentIndex )
 
-    def generateSuccessor( self, agentIndex, action, numPacman, deadPacmans, pacmanInfo):
+    def generateSuccessor( self, agentIndex, action, numPacman, deadPacmans, pacmanInfo, team_map):
         """
         Returns the successor state after the specified agent takes the action.
         """
@@ -121,15 +114,18 @@ class GameState:
         # Time passes
         if agentIndex < numPacman:
             state.data.scoreChange += -TIME_PENALTY # Penalty for waiting around
+            state.data.scores[pacmanInfo['team']] += -TIME_PENALTY
         else:
             GhostRules.decrementTimer( state.data.agentStates[agentIndex] )
 
         # Resolve multi-agent effects
-        GhostRules.checkDeath( state, agentIndex, numPacman )
+        GhostRules.checkDeath( state, agentIndex, numPacman, team_map )
 
         # Book keeping
         state.data._agentMoved = agentIndex
         state.data.score += state.data.scoreChange
+        if agentIndex < numPacman:
+            state.data.scores[pacmanInfo['team']] += state.data.scoreChange
         GameState.explored.add(self)
         GameState.explored.add(state)
         return state
@@ -146,7 +142,6 @@ class GameState:
     def getPacmanState( self, agentIndex=0 ):
         """
         Returns an AgentState object for pacman (in game.py)
-
         state.pos gives the current position
         state.direction gives the travel vector
         """
@@ -156,8 +151,8 @@ class GameState:
         return [self.data.agentStates[i] for i in range(numPacman)\
                 if i not in ignore]
 
-    def getPacmanPosition( self ):
-        return self.data.agentStates[0].getPosition()
+    def getPacmanPosition( self, agentIndex=0 ):
+        return self.data.agentStates[agentIndex].getPosition()
 
     def getPacmanPositions( self, numPacman, ignore=[] ):
         return [ self.data.agentStates[i].getPosition() for i in range(numPacman)\
@@ -197,10 +192,8 @@ class GameState:
     def getFood(self):
         """
         Returns a Grid of boolean food indicator variables.
-
         Grids can be accessed via list notation, so to check
         if there is food at (x,y), just call
-
         currentFood = state.getFood()
         if currentFood[x][y] == True: ...
         """
@@ -209,10 +202,8 @@ class GameState:
     def getWalls(self):
         """
         Returns a Grid of boolean wall indicator variables.
-
         Grids can be accessed via list notation, so to check
         if there is a wall at (x,y), just call
-
         walls = state.getWalls()
         if walls[x][y] == True: ...
         """
@@ -229,6 +220,12 @@ class GameState:
 
     def isWin( self ):
         return self.data._win
+    
+    def allDeadIn(self, team):
+        for pacmanAgent in self.pacmanAgents:
+            if pacmanAgent.team == team and pacmanAgent.index not in self.data.deadPacmans:
+                return False
+        return True
 
     #############################################
     #             Helper methods:               #
@@ -241,6 +238,7 @@ class GameState:
         """
         if prevState != None: # Initial state
             self.data = GameStateData(prevState.data)
+            self.pacmanAgents = prevState.pacmanAgents
         else:
             self.data = GameStateData()
 
@@ -265,11 +263,11 @@ class GameState:
 
         return str(self.data)
 
-    def initialize( self, layout, numGhostAgents=1000 ):
+    def initialize( self, layout, nteams, numGhostAgents=1000 ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
-        self.data.initialize(layout, numGhostAgents)
+        self.data.initialize(layout, nteams, numGhostAgents)
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -289,13 +287,14 @@ class ClassicGameRules:
     def __init__(self, timeout=30):
         self.timeout = timeout
 
-    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, ghostAgents, display, quiet = False, catchExceptions=False):
+    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, ghostAgents, display, quiet = False, catchExceptions=False):
         agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
         mas_agents = [agent for agent in pacmanAgents] + ghostAgents[:layout.getNumGhosts()]
         initState = GameState()
-        initState.initialize( layout, len(ghostAgents) ) # We might have to change layout
+        initState.initialize( layout, nteams, len(ghostAgents) )
         game = Game(agents, mas_agents, layout.numPacman, display, self, catchExceptions=catchExceptions)
         game.state = initState
+        game.state.pacmanAgents = pacmanAgents
         self.initialState = initState.deepCopy()
         self.quiet = quiet
         return game
@@ -308,7 +307,7 @@ class ClassicGameRules:
         if state.isLose(): self.lose(state, game)
 
     def win( self, state, game ):
-        if not self.quiet: print "Pacmans emerges victorious! Score: %d" % state.data.score
+        if not self.quiet: print "All food consumed! Scores: " + str(state.data.scores)
         game.gameOver = True
 
     def lose( self, state, game ):
@@ -324,7 +323,7 @@ class ClassicGameRules:
             # else:
             #     df.append(rows)
             #     df.to_csv ("heat_map_sys0().csv", index = None, header=True)
-            print "Pacmans died! Score: %d" % state.data.score
+            print "Game Over! Scores: " + str(state.data.scores)
         game.gameOver = True
 
     def getProgress(self, game):
@@ -463,19 +462,20 @@ class GhostRules:
         ghostState.scaredTimer = max( 0, timer - 1 )
     decrementTimer = staticmethod( decrementTimer )
 
-    def checkDeath( state, agentIndex, numPacman):
+    def checkDeath( state, agentIndex, numPacman, team_map):
         #pacmanPosition = state.getPacmanPosition()
         pacmanPositions = state.getPacmanPositions(numPacman)
         if agentIndex < numPacman: # Pacman just moved; Anyone can kill him
             for index in range( numPacman, len( state.data.agentStates ) ):
                 ghostState = state.data.agentStates[index]
                 ghostPosition = ghostState.configuration.getPosition()
-                # if GhostRules.canKill( pacmanPosition, ghostPosition ):
-                #     GhostRules.collide( state, ghostState, index )
-                for pacmanIndex, pacmanPosition in enumerate(pacmanPositions):
-                    if pacmanIndex in state.data.deadPacmans: continue
-                    if GhostRules.canKill( pacmanPosition, ghostPosition ):
-                        GhostRules.collide( state, ghostState, index, pacmanIndex, numPacman )
+                pacmanPosition = state.getPacmanPosition(agentIndex)
+                if GhostRules.canKill( pacmanPosition, ghostPosition ):
+                    GhostRules.collide( state, ghostState, index, agentIndex, numPacman, team_map )
+                # for pacmanIndex, pacmanPosition in enumerate(pacmanPositions):
+                #     if pacmanIndex in state.data.deadPacmans: continue
+                #     if GhostRules.canKill( pacmanPosition, ghostPosition ):
+                #         GhostRules.collide( state, ghostState, index, pacmanIndex, numPacman, team_map )
         else:
             ghostState = state.data.agentStates[agentIndex]
             ghostPosition = ghostState.configuration.getPosition()
@@ -484,12 +484,13 @@ class GhostRules:
             for pacmanIndex, pacmanPosition in enumerate(pacmanPositions):
                 if pacmanIndex in state.data.deadPacmans: continue
                 if GhostRules.canKill( pacmanPosition, ghostPosition ):
-                    GhostRules.collide( state, ghostState, agentIndex, pacmanIndex, numPacman )
+                    GhostRules.collide( state, ghostState, agentIndex, pacmanIndex, numPacman, team_map )
     checkDeath = staticmethod( checkDeath )
 
-    def collide( state, ghostState, agentIndex, pacmanIndex, numPacman):
+    def collide( state, ghostState, agentIndex, pacmanIndex, numPacman, team_map):
         if ghostState.scaredTimer > 0:
             state.data.scoreChange += 200
+            state.data.scores[ team_map[pacmanIndex] ] += 200
             GhostRules.placeGhost(state, ghostState)
             ghostState.scaredTimer = 0
             # Added for first-person
@@ -497,10 +498,17 @@ class GhostRules:
         else:
             state.data.deadPacmans.append(pacmanIndex)
             print "Pacman #"+str(pacmanIndex)+" died"
-            if not state.data._win and len(state.data.deadPacmans)==numPacman:
-                print "all pacman dead"
-                state.data.scoreChange -= 500
+            
+            if state.allDeadIn(team_map[pacmanIndex]):
+                print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
+                state.data.scores[ team_map[pacmanIndex] ] -= 500
                 state.data._lose = True
+            
+            # if not state.data._win and len(state.data.deadPacmans)==numPacman:
+            #     print "all pacman dead"
+            #     state.data.scoreChange -= 500
+            #     state.data.scores[ team_map[pacmanIndex] ] -= 500
+            #     state.data._lose = True
     collide = staticmethod( collide )
 
     def canKill( pacmanPosition, ghostPosition ):
@@ -627,8 +635,12 @@ def readCommand( argv ):
     pacman1.index = 0
     pacman2.index = 1
     pacman3.index = 2
+    pacman1.team = 0
+    pacman2.team = 0
+    pacman3.team = 1
     args['pacman'] = pacman
     mas_args['pacmans'] = [pacman1, pacman2, pacman3]
+    mas_args['nteams'] = 2
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
@@ -720,6 +732,7 @@ def par(i):
     layout, pacman, ghosts, display, numGames, record, catchExceptions, timeout, numTraining = [i[1] for i in args.items()]
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
+    nteams = mas_args['nteams']
 
     rules = ClassicGameRules(timeout)
     start_time = time.time()
@@ -731,7 +744,7 @@ def par(i):
     else:
         gameDisplay = display
         rules.quiet = False
-    game = rules.newGame( layout, pacman, pacmans, numPacman, ghosts, gameDisplay, beQuiet, catchExceptions)
+    game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, ghosts, gameDisplay, beQuiet, catchExceptions)
     game.run()
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
@@ -833,11 +846,8 @@ if __name__ == '__main__':
     """
     The main function called when pacman.py is run
     from the command line:
-
     > python pacman.py
-
     See the usage string for more details.
-
     > python pacman.py --help
     """
     # If code is ran parallelly using Poll, then logs will cause
