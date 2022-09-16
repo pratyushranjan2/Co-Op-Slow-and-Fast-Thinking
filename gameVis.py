@@ -1,5 +1,6 @@
 import pygame, sys
 import json
+import time
 
 STATE_GRID = []
 
@@ -32,7 +33,12 @@ PACMANS = [0, 0, 1]
 PACMAN_LIFE = [True, True, True]
 PACMAN_POS = [[2,5], [10,5], [18,5]]
 PACMAN_COLOR = [GREEN, BLUE]
+
+GHOST_POS = [[9,1], [12,1]]
+
 FOOD_POS = {}
+
+INVERT = 6
 
 # logs
 LOGS = []
@@ -55,16 +61,29 @@ def loadState(filename):
     return state_grid
 
 def initGrid(state_grid):
-    global GRID_HEIGHT, GRID_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH, UNIT_SIZE
+    global GRID_HEIGHT, GRID_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH, UNIT_SIZE, INVERT
 
     GRID_WIDTH = len(state_grid[0])
     GRID_HEIGHT = len(state_grid)
     SCREEN_WIDTH = UNIT_SIZE*GRID_WIDTH
     SCREEN_HEIGHT = UNIT_SIZE*GRID_HEIGHT
 
+    INVERT = GRID_HEIGHT-1
+
     for h in range(GRID_HEIGHT):
         for w in range(GRID_WIDTH):
-            FOOD_POS[(h,w)] = 1
+            if(STATE_GRID[h][w]==FOOD):
+                FOOD_POS[(h,w)] = 1
+            else:
+                FOOD_POS[(h,w)] = 0
+    
+    global STATE_GRID
+
+    temp = []
+    for s in STATE_GRID:
+        temp.append(list(s))
+    
+    STATE_GRID = temp
 
 def drawCell(surface, cell, xpos, ypos):
     
@@ -119,31 +138,50 @@ def updateState(log):
     # print "all pacman dead"
     # print positions, self.state.data.deadPacmans
 
-    global STATE_GRID, PACMAN_LIFE, PACMAN_POS
+    global STATE_GRID, PACMAN_LIFE, PACMAN_POS, FOOD_POS, GHOST_POS
 
     if log[0] == '[':
-        log = '[' + log + ']'
         log_list = json.loads(log)
+        print (log_list)
 
         pos = log_list[0]
         plen = len(pos)
 
-        for p in range(plen):
-            STATE_GRID[PACMAN_POS[p][0]][PACMAN_POS[p][1]] = BLANK
-            PACMAN_POS[p] = pos[p]
-            STATE_GRID[PACMAN_POS[p][0]][PACMAN_POS[p][1]] = PACMAN
-        
         for p in log_list[1]:
             PACMAN_LIFE[p] = False
-            STATE_GRID[PACMAN_POS[p][0]][PACMAN_POS[p][1]] = BLANK
-    
-    elif log[:7] == "Pacmans" or log[:3] == "all":
-        pass
+            STATE_GRID[PACMAN_POS[p][1]][PACMAN_POS[p][0]] = BLANK
 
-    elif log[:6] == "Pacman":
-        # pnum = int(log[8:-5])
-        # PACMAN_LIFE[pnum] = False
-        pass
+        for p in range(3):
+            # print(PACMAN_POS[p][1], PACMAN_POS[p][0])
+            STATE_GRID[PACMAN_POS[p][1]][PACMAN_POS[p][0]] = BLANK
+
+            if(PACMAN_LIFE[p]):
+                PACMAN_POS[p][0] = pos[p][0]
+                PACMAN_POS[p][1] = INVERT-pos[p][1]
+                STATE_GRID[PACMAN_POS[p][1]][PACMAN_POS[p][0]] = PACMAN
+                FOOD_POS[(PACMAN_POS[p][1], PACMAN_POS[p][0])] = 0
+
+        for p in range(2):
+            # print(GHOST_POS[p][0], GHOST_POS[p][1])
+
+            STATE_GRID[GHOST_POS[p][1]][GHOST_POS[p][0]] = FOOD
+            if (FOOD_POS[(GHOST_POS[p][1], GHOST_POS[p][0])] == 0):
+                STATE_GRID[GHOST_POS[p][1]][GHOST_POS[p][0]] = BLANK
+            
+            GHOST_POS[p][0] = int(pos[3+p][0])
+            GHOST_POS[p][1] = INVERT-int(pos[3+p][1])
+            STATE_GRID[GHOST_POS[p][1]][GHOST_POS[p][0]] = GHOST
+    
+    # elif log[:7] == "Pacmans" or log[:3] == "all":
+    #     pass
+
+    # elif log[:6] == "Pacman":
+    #     # pnum = int(log[8:-5])
+    #     # PACMAN_LIFE[pnum] = False
+    #     pass
+
+    else:
+        print(log)
 
 
 
@@ -153,7 +191,6 @@ def main():
 
     fileName = "layouts/mas3.lay"
     STATE_GRID = loadState(fileName)
-    print(STATE_GRID)
 
     # STATE_GRID =   ["%%%%%%%%%%%%%%%%%%%%%%",
     #                 "%.......%G  G%.......%",
@@ -164,6 +201,14 @@ def main():
     #                 "%%%%%%%%%%%%%%%%%%%%%%"]
 
     initGrid(STATE_GRID)
+
+    # print(STATE_GRID)
+    # print(GRID_HEIGHT, GRID_WIDTH)
+
+    fileName = "logfiles/newlog"
+    logReader(fileName)
+
+    # print(FOOD_POS.keys())
     
     pygame.init()
     surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -173,6 +218,7 @@ def main():
     LOGPTR = 0
 
     while True:
+        time.sleep(1)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -186,9 +232,13 @@ def main():
         drawGameState(STATE_GRID, surface)
         pygame.display.update()
 
-        # log = LOGS[LOGPTR]
-        # updateState(log)
-        # LOGPTR += 1
+        if LOGPTR<LOGSIZE:
+            log = LOGS[LOGPTR]
+            updateState(log)
+            LOGPTR += 5
+        else:
+            continue
+        
 
 if __name__=="__main__":
     main()
