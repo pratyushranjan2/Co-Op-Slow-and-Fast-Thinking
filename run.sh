@@ -1,1 +1,1 @@
-python pacman.py -p System1Agent -n 20 -q -g DirectionalGhost -l mas3
+python pacman.py -p System1Agent -n 20 -q -g DirectionalGhost -l mas_large
