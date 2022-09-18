@@ -647,8 +647,9 @@ class Game:
         while not self.gameOver:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
-            positions = self.state.getPacmanPositions(self.numPacman)
-            print positions, self.state.data.deadPacmans, self.state.data.scores
+            # positions = self.state.getPacmanPositions(self.numPacman)
+            positions = self.state.getAllAgentPositions()
+            print [positions, self.state.data.deadPacmans, self.state.data.scores]
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1

@@ -165,9 +165,12 @@ class GameState:
     def getPacmanPositions( self, numPacman, ignore=[] ):
         return [ self.data.agentStates[i].getPosition() for i in range(numPacman)\
                     if i not in ignore ]
+    
+    def getAllAgentPositions(self):
+        return [ self.data.agentStates[i].getPosition() for i in range(len(self.data.agentStates)) ]
 
     def getGhostStates( self ):
-        return self.data.agentStates[1:]
+        return self.data.agentStates[self.data.numPacman:]
 
     def getGhostState( self, agentIndex ):
         if agentIndex == 0 or agentIndex >= self.getNumAgents():
@@ -175,7 +178,7 @@ class GameState:
         return self.data.agentStates[agentIndex]
 
     def getGhostPosition( self, agentIndex ):
-        if agentIndex == 0:
+        if agentIndex < self.data.numPacman:
             raise Exception("Pacman's index passed to getGhostPosition")
         return self.data.agentStates[agentIndex].getPosition()
 
