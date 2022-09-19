@@ -403,7 +403,7 @@ class GameStateData:
             self.layout = prevState.layout
             self._eaten = prevState._eaten
             self.score = prevState.score
-            self.scores = prevState.scores
+            self.scores = self.copyPacmanScores( prevState.scores )
             self.numPacman = prevState.numPacman
 
         self._foodEaten = None
@@ -413,7 +413,7 @@ class GameStateData:
         self._lose = False
         self._win = False
         self.scoreChange = 0
-        self.deadPacmans = []
+        self.deadPacmans = [] if prevState==None else self.copyDeadPacmans(prevState.deadPacmans)
 
     def deepCopy( self ):
         state = GameStateData( self )
@@ -430,6 +430,18 @@ class GameStateData:
         for agentState in agentStates:
             copiedStates.append( agentState.copy() )
         return copiedStates
+    
+    def copyPacmanScores( self, scores ):
+        copiedScores = []
+        for score in scores:
+            copiedScores.append( score )
+        return copiedScores
+
+    def copyDeadPacmans( self, deadPacmans ):
+        copiedDeadPacmans = []
+        for deadPacman in deadPacmans:
+            copiedDeadPacmans.append( deadPacman )
+        return copiedDeadPacmans
 
     def __eq__( self, other ):
         """
@@ -728,7 +740,7 @@ class Game:
             else:
                 #print "curr = " + str(agentIndex)
                 isPacman = agentIndex < self.numPacman
-                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team}
+                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team, 'team_map': self.team_map}
                 action = agent.getAction(observation, pacmanInfo)
             self.unmute()
 

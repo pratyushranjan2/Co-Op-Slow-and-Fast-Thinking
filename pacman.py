@@ -95,7 +95,7 @@ class GameState:
 #        GameState.explored.add(self)
         if self.isWin() or self.isLose(): return []
 
-        if pacmanInfo != None:  # Pacman is moving
+        if agentIndex < self.data.numPacman:  # Pacman is moving
             return PacmanRules.getLegalActions( self, pacmanInfo )
         else:
             return GhostRules.getLegalActions( self, agentIndex )
@@ -109,7 +109,6 @@ class GameState:
 
         # Copy current state
         state = GameState(self)
-        state.data.deadPacmans = deadPacmans
 
         # Let agent's logic deal with its action's effects on the board
         if agentIndex < numPacman:  # Pacman is moving
@@ -190,6 +189,9 @@ class GameState:
 
     def getScore( self ):
         return float(self.data.score)
+    
+    def getTeamScore(self, team):
+        return self.data.scores[team]
 
     def getCapsules(self):
         """
@@ -512,10 +514,10 @@ class GhostRules:
             state.data._eaten[agentIndex] = True
         else:
             state.data.deadPacmans.append(pacmanIndex)
-            print "Pacman #"+str(pacmanIndex)+" died"
+            #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):
-                print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
+                #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
                 state.data.scores[ team_map[pacmanIndex] ] -= 500
                 state.data._lose = True
             
@@ -638,8 +640,8 @@ def readCommand( argv ):
     pacmanType = loadAgent(options.pacman, noKeyboard)
     pacman1Type = loadAgent(options.pacman, noKeyboard)
     pacman2Type = loadAgent(options.pacman, noKeyboard)
-    pacman3Type = loadAgent(options.pacman, noKeyboard)
-    pacman4Type = loadAgent(options.pacman, noKeyboard)
+    # pacman3Type = loadAgent(options.pacman, noKeyboard)
+    # pacman4Type = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -647,23 +649,23 @@ def readCommand( argv ):
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    # pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    # pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
-    pacman3.index = 2
-    pacman4.index = 3
+    # pacman3.index = 2
+    # pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
-    pacman3.team = 1
-    pacman4.team = 1
+    # pacman3.team = 1
+    # pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
+    mas_args['pacmans'] = [pacman1, pacman2]
     mas_args['nteams'] = 2
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
-    pacman3.numPacman = len(mas_args['pacmans'])
-    pacman4.numPacman = len(mas_args['pacmans'])
+    # pacman3.numPacman = len(mas_args['pacmans'])
+    # pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
