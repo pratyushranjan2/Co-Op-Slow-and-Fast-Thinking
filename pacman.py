@@ -592,7 +592,7 @@ def readCommand( argv ):
                       help=default('the ghost agent TYPE in the ghostAgents module to use'),
                       metavar = 'TYPE', default='RandomGhost')
     parser.add_option('-k', '--numghosts', type='int', dest='numGhosts',
-                      help=default('The maximum number of ghosts to use'), default=4)
+                      help=default('The maximum number of ghosts to use'), default=10)
     parser.add_option('-z', '--zoom', type='float', dest='zoom',
                       help=default('Zoom the size of the graphics window'), default=1.0)
     parser.add_option('-f', '--fixRandomSeed', action='store_true', dest='fixRandomSeed',
@@ -639,6 +639,7 @@ def readCommand( argv ):
     pacman1Type = loadAgent(options.pacman, noKeyboard)
     pacman2Type = loadAgent(options.pacman, noKeyboard)
     pacman3Type = loadAgent(options.pacman, noKeyboard)
+    pacman4Type = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -647,18 +648,22 @@ def readCommand( argv ):
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
     pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
     pacman3.index = 2
+    pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
     pacman3.team = 1
+    pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3]
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
     mas_args['nteams'] = 2
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
+    pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
