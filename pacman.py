@@ -641,7 +641,7 @@ def readCommand( argv ):
     pacmanType = loadAgent(options.pacman, noKeyboard)
     pacman1Type = loadAgent(options.pacman, noKeyboard)
     pacman2Type = loadAgent(options.pacman, noKeyboard)
-    # pacman3Type = loadAgent(options.pacman, noKeyboard)
+    pacman3Type = loadAgent(options.pacman, noKeyboard)
     # pacman4Type = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
@@ -650,22 +650,22 @@ def readCommand( argv ):
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    # pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     # pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
-    # pacman3.index = 2
+    pacman3.index = 2
     # pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
-    # pacman3.team = 1
+    pacman3.team = 0
     # pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]
-    mas_args['nteams'] = 2
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3]
+    mas_args['nteams'] = 1
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
-    # pacman3.numPacman = len(mas_args['pacmans'])
+    pacman3.numPacman = len(mas_args['pacmans'])
     # pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
