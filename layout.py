@@ -33,6 +33,7 @@ class Layout:
         self.agentPositions = []
         self.numGhosts = 0
         self.numPacman = 0
+        self.numFood = 0
         self.processLayoutText(layoutText)
         self.layoutText = layoutText
         self.totalFood = len(self.food.asList())
@@ -119,6 +120,7 @@ class Layout:
             self.walls[x][y] = True
         elif layoutChar == '.':
             self.food[x][y] = True
+            self.numFood += 1
         elif layoutChar == 'o':
             self.capsules.append((x, y))
         elif layoutChar == 'P':
