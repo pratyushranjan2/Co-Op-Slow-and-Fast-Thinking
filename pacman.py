@@ -514,6 +514,7 @@ class GhostRules:
             state.data._eaten[agentIndex] = True
         else:
             state.data.deadPacmans.append(pacmanIndex)
+            state.data.scores[ team_map[pacmanIndex] ] -= 50
             #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):

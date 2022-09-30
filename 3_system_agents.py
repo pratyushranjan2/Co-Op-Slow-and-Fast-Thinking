@@ -14,7 +14,7 @@
 
 import sys
 from util import manhattanDistance
-from game import Directions
+from game import Directions, GameStateData
 import random, util
 import copy
 import pickle
@@ -34,6 +34,7 @@ def betterEvaluationFunction(currentGameState, pacmanInfo):
     "*** YOUR CODE HERE ***"
     """Calculating distance to the closest food pellet"""
     
+    normalisedEvaluation = False
     pacmanIndex = pacmanInfo['agentIndex']
     newPos = currentGameState.getPacmanPosition(pacmanIndex)
     newFood = currentGameState.getFood()
@@ -58,6 +59,13 @@ def betterEvaluationFunction(currentGameState, pacmanInfo):
     numberOfCapsules = len(newCapsule)
 
     """Combination of the above calculated metrics."""
+    if normalisedEvaluation:
+        normScore = currentGameState.data.layout.numFood*10
+        normGhostProxi = currentGameState.data.layout.numGhosts
+        
+        return currentGameState.getTeamScore(pacmanInfo['team'])/normScore + (1 / float(min_food_distance)) - (1 / float(distances_to_ghosts)) - proximity_to_ghosts/normGhostProxi - numberOfCapsules
+    
+    
     return currentGameState.getTeamScore(pacmanInfo['team']) + (1 / float(min_food_distance)) - (1 / float(distances_to_ghosts)) - proximity_to_ghosts - numberOfCapsules
 
 class System1Agent(Agent): #system 1 is capable of gameplay on its own
