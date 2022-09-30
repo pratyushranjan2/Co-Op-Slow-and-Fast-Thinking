@@ -139,6 +139,8 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
                 if nextAgent == pacmanIndex:
                     depth += 1
                 info = None
+                # info for another pacman. Not the one for whom actions
+                # are being evaluated
                 if agent < numPacman:
                     info = copy.deepcopy(pacmanInfo)
                     info['agentIndex'] = agent
