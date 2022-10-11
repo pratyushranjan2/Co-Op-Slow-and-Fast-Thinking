@@ -661,7 +661,6 @@ class Game:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
             # positions = self.state.getPacmanPositions(self.numPacman)
-            positions = self.state.getAllAgentPositions()
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
@@ -769,7 +768,8 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
-            print positions, self.state.data.deadPacmans, self.state.data.scores, self.steps_alive
+            # positions = self.state.getAllAgentPositions()
+            # print positions, self.state.data.deadPacmans, self.state.data.scores, self.steps_alive
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
