@@ -51,6 +51,7 @@ import util, layout
 import sys, types, time, random, os
 import pandas as pd
 import  cPickle
+from datetime import datetime, timedelta
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -641,7 +642,7 @@ def readCommand( argv ):
     pacmanType = loadAgent(options.pacman, noKeyboard)
     pacman1Type = loadAgent(options.pacman, noKeyboard)
     pacman2Type = loadAgent(options.pacman, noKeyboard)
-    pacman3Type = loadAgent(options.pacman, noKeyboard)
+    # pacman3Type = loadAgent(options.pacman, noKeyboard)
     # pacman4Type = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
@@ -650,22 +651,22 @@ def readCommand( argv ):
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    # pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     # pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
-    pacman3.index = 2
+    # pacman3.index = 2
     # pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
-    pacman3.team = 0
+    # pacman3.team = 0
     # pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3]
+    mas_args['pacmans'] = [pacman1, pacman2]
     mas_args['nteams'] = 1
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
-    pacman3.numPacman = len(mas_args['pacmans'])
+    # pacman3.numPacman = len(mas_args['pacmans'])
     # pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
@@ -752,6 +753,7 @@ def replayGame( layout, actions, display ):
     display.finish()
 
 def par(i):
+    global save_df
     layout, pacman, ghosts, display, numGames, record, catchExceptions, timeout, numTraining = [i[1] for i in args.items()]
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
@@ -768,7 +770,10 @@ def par(i):
         gameDisplay = display
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, ghosts, gameDisplay, beQuiet, catchExceptions)
-    game.run()
+    scores, deadPacmans, steps_alive, is_win = game.run()
+    row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
+    save_df = pd.concat([save_df, row], axis=0, sort=False)
+    print scores, deadPacmans, steps_alive, is_win
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
     score = game.state.getScore()
@@ -876,6 +881,14 @@ if __name__ == '__main__':
 
     > python pacman.py --help
     """
+    # name of the file to save report for
+    # simulation session
+    now = datetime.now()
+    save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+                '_' + \
+                str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
     # like par(0), or par(0), par(1), par(2), ... sequentially.
@@ -883,7 +896,7 @@ if __name__ == '__main__':
     # runGames( **args )
 
     # print args.keys()
-    all_in = []
+    # all_in = []
     # print [i[1] for i in args.items()]
     # for i in range(args['numGames']):
     #     all_in.append((i, [i[1] for i in args.items()]))
@@ -893,6 +906,9 @@ if __name__ == '__main__':
     par(0)
     #print result[:2]
     #print len(result)
+
+    # save simulation data
+    save_df.to_csv(save_file, index=False)
 
     # import cProfile
     # cProfile.run("runGames( **args )")
