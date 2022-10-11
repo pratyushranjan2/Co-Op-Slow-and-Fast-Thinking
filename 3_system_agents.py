@@ -125,7 +125,7 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
         
         def expectimax(agent, depth, currentGameState):
             #print "agent = " + str(agent) + " agentIndex: " + str(pacmanInfo['agentIndex'])
-            if pacmanIndex in currentGameState.data.deadPacmans or currentGameState.isWin() or depth == self.depth:  # return the utility in case the defined depth is reached or the game is won/lost.
+            if pacmanIndex in currentGameState.data.deadPacmans or currentGameState.isWin() or currentGameState.isLose() or depth == self.depth:  # return the utility in case the defined depth is reached or the game is won/lost.
                 return self.evaluationFunction(currentGameState, pacmanInfo)
             if agent == pacmanIndex:  # maximizing for pacman
                 legalActions = getLegalActions(agent, currentGameState, pacmanInfo, policy='random')
@@ -138,6 +138,8 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
                     nextAgent = 0
                 if nextAgent == pacmanIndex:
                     depth += 1
+                if agent in currentGameState.data.deadPacmans:
+                    return expectimax(nextAgent, depth, currentGameState)
                 info = None
                 # info for another pacman. Not the one for whom actions
                 # are being evaluated

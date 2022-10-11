@@ -52,6 +52,7 @@ import sys, types, time, random, os
 import pandas as pd
 import  cPickle
 from datetime import datetime, timedelta
+from tqdm import tqdm
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -640,10 +641,10 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent(options.pacman, noKeyboard)
-    pacman2Type = loadAgent(options.pacman, noKeyboard)
-    # pacman3Type = loadAgent(options.pacman, noKeyboard)
-    # pacman4Type = loadAgent(options.pacman, noKeyboard)
+    pacman1Type = loadAgent('System1Agent', noKeyboard)
+    pacman2Type = loadAgent('System1Agent', noKeyboard)
+    pacman3Type = loadAgent('System2Agent', noKeyboard)
+    pacman4Type = loadAgent('System2Agent', noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -651,23 +652,23 @@ def readCommand( argv ):
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    # pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    # pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
-    # pacman3.index = 2
-    # pacman4.index = 3
+    pacman3.index = 2
+    pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
-    # pacman3.team = 0
-    # pacman4.team = 1
+    pacman3.team = 1
+    pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]
-    mas_args['nteams'] = 1
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
+    mas_args['nteams'] = 2
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
-    # pacman3.numPacman = len(mas_args['pacmans'])
-    # pacman4.numPacman = len(mas_args['pacmans'])
+    pacman3.numPacman = len(mas_args['pacmans'])
+    pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -901,9 +902,10 @@ if __name__ == '__main__':
     # for i in range(args['numGames']):
     #     all_in.append((i, [i[1] for i in args.items()]))
     # print range(args['numGames'])
-    #pool = Pool(processes=14)
-    #result = pool.map(par, range(args['numGames']))
-    par(0)
+    # pool = Pool(processes=14)
+    # result = pool.map(par, range(args['numGames']))
+    for i in range(args['numGames']):
+        par(i)
     #print result[:2]
     #print len(result)
 
