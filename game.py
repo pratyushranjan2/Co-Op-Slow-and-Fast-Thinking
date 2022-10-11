@@ -569,6 +569,7 @@ class Game:
         self.totalMasAgentTimes = [0 for agent in mas_agents]
         self.totalAgentTimeWarnings = [0 for agent in agents]
         self.totalMasAgentTimeWarnings = [0 for agent in agents]
+        self.steps_alive = [0]*numPacman
         self.agentTimeout = False
         import cStringIO
         self.agentOutput = [cStringIO.StringIO() for agent in agents]
@@ -661,7 +662,6 @@ class Game:
             # agent = self.agents[agentIndex]
             # positions = self.state.getPacmanPositions(self.numPacman)
             positions = self.state.getAllAgentPositions()
-            print [positions, self.state.data.deadPacmans, self.state.data.scores]
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
@@ -762,6 +762,14 @@ class Game:
             self.display.update( self.state.data )
             ###idx = agentIndex - agentIndex % 2 + 1
             ###self.display.update( self.state.makeObservation(idx).data )
+            
+            # Update pacman agent total steps alive
+            for i in range(len(self.steps_alive)):
+                if i not in self.state.data.deadPacmans:
+                    self.steps_alive[i] += 1
+            
+            # Print some info 
+            print positions, self.state.data.deadPacmans, self.state.data.scores, self.steps_alive
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
@@ -787,3 +795,5 @@ class Game:
                     self.unmute()
                     return
         self.display.finish()
+
+        return self.state.data.scores, self.state.data.deadPacmans, self.steps_alive, self.state.data._win
