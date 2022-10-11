@@ -52,7 +52,7 @@ import sys, types, time, random, os
 import pandas as pd
 import  cPickle
 from datetime import datetime, timedelta
-from tqdm import tqdm
+import os
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -773,7 +773,12 @@ def par(i):
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
+    
+    if os.path.isfile(save_file):
+        save_df = pd.read_csv(save_file)
     save_df = pd.concat([save_df, row], axis=0, sort=False)
+    save_df.to_csv(save_file, index=False)
+    
     print scores, deadPacmans, steps_alive, is_win
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
@@ -908,9 +913,6 @@ if __name__ == '__main__':
         par(i)
     #print result[:2]
     #print len(result)
-
-    # save simulation data
-    save_df.to_csv(save_file, index=False)
 
     # import cProfile
     # cProfile.run("runGames( **args )")
