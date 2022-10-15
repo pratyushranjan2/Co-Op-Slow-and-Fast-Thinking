@@ -218,7 +218,7 @@ def main():
     LOGPTR = 0
 
     while True:
-        time.sleep(1)
+        time.sleep(0.5)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -235,7 +235,7 @@ def main():
         if LOGPTR<LOGSIZE:
             log = LOGS[LOGPTR]
             updateState(log)
-            LOGPTR += 5
+            LOGPTR += 1
         else:
             continue
         

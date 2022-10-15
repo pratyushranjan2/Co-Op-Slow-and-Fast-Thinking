@@ -660,13 +660,9 @@ class Game:
         while not self.gameOver:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
-<<<<<<< HEAD
             positions = self.state.getPacmanPositions()
             ghostPositions = self.state.getGhostPositions()
             print [positions, self.state.data.deadPacmans, self.state.data.scores]
-=======
-            # positions = self.state.getPacmanPositions(self.numPacman)
->>>>>>> 5a18382ac403281a2a48b3f0dea9d64a8675f5ff
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
@@ -800,10 +796,6 @@ class Game:
                     self._agentCrash(agentIndex)
                     self.unmute()
                     return
-<<<<<<< HEAD
-        self.display.finish()
-=======
         self.display.finish()
 
         return self.state.data.scores, self.state.data.deadPacmans, self.steps_alive, self.state.data._win
->>>>>>> 5a18382ac403281a2a48b3f0dea9d64a8675f5ff
