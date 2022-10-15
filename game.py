@@ -347,8 +347,28 @@ class Actions:
         return possible
     
     getPossibleActions = staticmethod(getPossibleActions)
+
+    def getBiasedGhostPossibleActions(config, team1PacmanPositions, walls):
+        possible = []
+        x, y = config.pos
+        x_int, y_int = int(x + 0.5), int(y + 0.5)
+
+        # In between grid points, all agents must continue straight
+        if (abs(x - x_int) + abs(y - y_int)  > Actions.TOLERANCE):
+            return [config.getDirection()]
+
+        for dir, vec in Actions._directionsAsList:
+            dx, dy = vec
+            next_y = y_int + dy
+            next_x = x_int + dx
+            if not walls[next_x][next_y] and (next_x, next_y) not in team1PacmanPositions: 
+                possible.append(dir)
+
+        return possible
     
-    def getMASPossibleActions(trgConfig, otherPacmanPositions, walls):
+    getBiasedGhostPossibleActions = staticmethod(getBiasedGhostPossibleActions)
+    
+    def getMASPossibleActions(trgConfig, ignorePositions, walls):
         possible = []
         x, y = trgConfig.pos
         x_int, y_int = int(x + 0.5), int(y + 0.5)
@@ -361,7 +381,7 @@ class Actions:
             dx, dy = vec
             next_y = y_int + dy
             next_x = x_int + dx
-            if not walls[next_x][next_y] and (next_x, next_y) not in otherPacmanPositions: 
+            if not walls[next_x][next_y] and (next_x, next_y) not in ignorePositions: 
                 possible.append(dir)
 
         return possible
@@ -405,6 +425,8 @@ class GameStateData:
             self.score = prevState.score
             self.scores = self.copyPacmanScores( prevState.scores )
             self.numPacman = prevState.numPacman
+            self.team1 = self.copyTeam1( prevState.team1 )
+            self.team2 = self.copyTeam2( prevState.team2 )
 
         self._foodEaten = None
         self._foodAdded = None
@@ -413,6 +435,7 @@ class GameStateData:
         self._lose = False
         self._win = False
         self.scoreChange = 0
+        self.biasedGhost = True
         self.deadPacmans = [] if prevState==None else self.copyDeadPacmans(prevState.deadPacmans)
 
     def deepCopy( self ):
@@ -424,6 +447,12 @@ class GameStateData:
         state._foodAdded = self._foodAdded
         state._capsuleEaten = self._capsuleEaten
         return state
+
+    def copyTeam1( self, team1 ):
+        return [i for i in team1]
+    
+    def copyTeam2( self, team2 ):
+        return [i for i in team2]
 
     def copyAgentStates( self, agentStates ):
         copiedStates = []
@@ -519,7 +548,7 @@ class GameStateData:
             return '3'
         return 'E'
 
-    def initialize( self, layout, nteams, numGhostAgents ):
+    def initialize( self, layout, nteams, team1, team2, numGhostAgents ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
@@ -531,6 +560,8 @@ class GameStateData:
         self.scores = [0]*nteams # scores[i] -> score for team-i
         self.scoreChange = 0
         self.numPacman = layout.numPacman
+        self.team1 = team1
+        self.team2 = team2
 
         self.agentStates = []
         numGhosts = 0
@@ -768,8 +799,8 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
-            # positions = self.state.getAllAgentPositions()
-            # print positions, self.state.data.deadPacmans, self.state.data.scores, self.steps_alive
+            #positions = self.state.getAllAgentPositions()
+            #print positions, self.state.data.scores, self.state.data.deadPacmans
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)

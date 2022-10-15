@@ -167,6 +167,11 @@ class GameState:
         return [ self.data.agentStates[i].getPosition() for i in range(numPacman)\
                     if i not in ignore ]
     
+    def getPacmanTeamPositions( self, team, ignore=[] ):
+        pacman_ids = self.data.team1 if team == 1 else self.data.team2
+        return [ self.data.agentStates[i].getPosition() for i in pacman_ids\
+                    if i not in ignore ]
+    
     def getAllAgentPositions(self):
         return [ self.data.agentStates[i].getPosition() for i in range(len(self.data.agentStates)) ]
 
@@ -282,11 +287,11 @@ class GameState:
 
         return str(self.data)
 
-    def initialize( self, layout, nteams, numGhostAgents=1000 ):
+    def initialize( self, layout, nteams, team1, team2, numGhostAgents=1000 ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
-        self.data.initialize(layout, nteams, numGhostAgents)
+        self.data.initialize(layout, nteams, team1, team2, numGhostAgents)
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -309,8 +314,10 @@ class ClassicGameRules:
     def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, ghostAgents, display, quiet = False, catchExceptions=False):
         agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
         mas_agents = [agent for agent in pacmanAgents] + ghostAgents[:layout.getNumGhosts()]
+        team1 = [agent.index for agent in pacmanAgents if agent.team == 0]
+        team2 = [agent.index for agent in pacmanAgents if agent.team == 1]
         initState = GameState()
-        initState.initialize( layout, nteams, len(ghostAgents) )
+        initState.initialize( layout, nteams, team1, team2, len(ghostAgents) )
         game = Game(agents, mas_agents, layout.numPacman, display, self, catchExceptions=catchExceptions)
         game.state = initState
         game.state.pacmanAgents = pacmanAgents
@@ -386,9 +393,12 @@ class PacmanRules:
         trgPacmanState = state.getPacmanState(agentIndex)
         # otherPacmanPositions should ignore current pacman
         # and dead pacmans
-        otherPacmanPositions = state.getPacmanPositions(pacmanInfo['numPacman'],\
+        ignorePositions = state.getPacmanPositions(pacmanInfo['numPacman'],\
                                                         ignore=[ agentIndex ] + state.data.deadPacmans)
-        return Actions.getMASPossibleActions( trgPacmanState.configuration, otherPacmanPositions, state.data.layout.walls )
+        if state.data.biasedGhost:
+            ignorePositions += state.getGhostPositions()
+            
+        return Actions.getMASPossibleActions( trgPacmanState.configuration, ignorePositions, state.data.layout.walls )
         #return Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
     getLegalActions = staticmethod( getLegalActions )
 
@@ -450,7 +460,11 @@ class GhostRules:
         reach a dead end, but can turn 90 degrees at intersections.
         """
         conf = state.getGhostState( ghostIndex ).configuration
-        possibleActions = Actions.getPossibleActions( conf, state.data.layout.walls )
+        if state.data.biasedGhost:
+            team1PacmanPositions = state.getPacmanTeamPositions(team=1, ignore=state.data.deadPacmans)
+            possibleActions = Actions.getBiasedGhostPossibleActions(conf, team1PacmanPositions, state.data.layout.walls)
+        else:
+            possibleActions = Actions.getPossibleActions( conf, state.data.layout.walls )
         reverse = Actions.reverseDirection( conf.direction )
         if Directions.STOP in possibleActions:
             possibleActions.remove( Directions.STOP )
@@ -643,8 +657,8 @@ def readCommand( argv ):
     pacmanType = loadAgent(options.pacman, noKeyboard)
     pacman1Type = loadAgent('System1Agent', noKeyboard)
     pacman2Type = loadAgent('System1Agent', noKeyboard)
-    pacman3Type = loadAgent('System2Agent', noKeyboard)
-    pacman4Type = loadAgent('System2Agent', noKeyboard)
+    pacman3Type = loadAgent('System1Agent', noKeyboard)
+    pacman4Type = loadAgent('System1Agent', noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -774,12 +788,12 @@ def par(i):
     scores, deadPacmans, steps_alive, is_win = game.run()
     row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
     
-    if os.path.isfile(save_file):
-        save_df = pd.read_csv(save_file)
-    save_df = pd.concat([save_df, row], axis=0, sort=False)
-    save_df.to_csv(save_file, index=False)
+    # if os.path.isfile(save_file):
+    #     save_df = pd.read_csv(save_file)
+    # save_df = pd.concat([save_df, row], axis=0, sort=False)
+    # save_df.to_csv(save_file, index=False)
     
-    print scores, deadPacmans, steps_alive, is_win
+    print scores, deadPacmans
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
     score = game.state.getScore()
@@ -889,11 +903,12 @@ if __name__ == '__main__':
     """
     # name of the file to save report for
     # simulation session
-    now = datetime.now()
-    save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
-                '_' + \
-                str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
-    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+    
+    # now = datetime.now()
+    # save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+    #             '_' + \
+    #             str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+    # save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
 
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
@@ -909,8 +924,9 @@ if __name__ == '__main__':
     # print range(args['numGames'])
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
-    for i in range(args['numGames']):
-        par(i)
+    par(0)
+    # for i in range(args['numGames']):
+    #     par(i)
     #print result[:2]
     #print len(result)
 
