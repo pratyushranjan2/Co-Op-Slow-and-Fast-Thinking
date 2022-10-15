@@ -645,8 +645,8 @@ def readCommand( argv ):
     # File where final info is added on completion
     global data_file_name
     data_file_name = options.fname
-    if options.fname is None:
-        print "Not storing final result, file not given"
+    # if options.fname is None:
+    #     print "Not storing final result, file not given"
 
     # Choose a layout
     args['layout'] = layout.getLayout( options.layout )
