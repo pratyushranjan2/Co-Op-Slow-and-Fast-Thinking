@@ -88,8 +88,8 @@ class QLearningAgent(ReinforcementAgent):
         maxValue = float("-inf")
         stateAction = ""
         for action in actions:
-            if maxValue <= self.getQValue(state, action) or maxValue == float("-inf"):
-                maxValue = self.getQValue(state, action)
+            if maxValue <= self.getQValue(state, action, pacmanInfo) or maxValue == float("-inf"):
+                maxValue = self.getQValue(state, action, pacmanInfo)
                 stateAction = action
 
         return stateAction
@@ -196,13 +196,13 @@ class ApproximateQAgent(PacmanQAgent):
     def getWeights(self):
         return self.weights
 
-    def getQValue(self, state, action):
+    def getQValue(self, state, action, pacmanInfo=None):
         """
           Should return Q(state,action) = w * featureVector
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        features = self.featExtractor.getFeatures(state, action)
+        features = self.featExtractor.getFeatures(state, action, pacmanInfo)
         qvalue = 0
         for feature in features:
             qvalue += features[feature] * self.weights[feature]

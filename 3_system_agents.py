@@ -14,17 +14,19 @@
 
 import sys
 from util import manhattanDistance
-from game import Directions
+from game import Directions, GameStateData
 import random, util
 import copy
 import pickle
 import numpy as np
+import random
+import copy
 
 from game import Agent
 from qlearningAgents import ApproximateQAgent
 
 
-def betterEvaluationFunction(currentGameState):
+def betterEvaluationFunction(currentGameState, pacmanInfo):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
@@ -33,7 +35,10 @@ def betterEvaluationFunction(currentGameState):
     """
     "*** YOUR CODE HERE ***"
     """Calculating distance to the closest food pellet"""
-    newPos = currentGameState.getPacmanPosition()
+    
+    normalisedEvaluation = False
+    pacmanIndex = pacmanInfo['agentIndex']
+    newPos = currentGameState.getPacmanPosition(pacmanIndex)
     newFood = currentGameState.getFood()
     newFoodList = newFood.asList()
     min_food_distance = -1
@@ -56,7 +61,14 @@ def betterEvaluationFunction(currentGameState):
     numberOfCapsules = len(newCapsule)
 
     """Combination of the above calculated metrics."""
-    return currentGameState.getScore() + (1 / float(min_food_distance)) - (1 / float(distances_to_ghosts)) - proximity_to_ghosts - numberOfCapsules
+    if normalisedEvaluation:
+        normScore = currentGameState.data.layout.numFood*10
+        normGhostProxi = currentGameState.data.layout.numGhosts
+        
+        return currentGameState.getTeamScore(pacmanInfo['team'])/normScore + (1 / float(min_food_distance)) - (1 / float(distances_to_ghosts)) - proximity_to_ghosts/normGhostProxi - numberOfCapsules
+    
+    
+    return currentGameState.getTeamScore(pacmanInfo['team']) + (1 / float(min_food_distance)) - (1 / float(distances_to_ghosts)) - proximity_to_ghosts - numberOfCapsules
 
 class System1Agent(Agent): #system 1 is capable of gameplay on its own
     """
@@ -82,41 +94,71 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
     """
 
     def __init__(self, evalFn = 'betterEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+        with open('network_weights.pkl', 'rb') as f:
+            self.feat_weights = pickle.load(f)
+        with open('features.pkl', 'rb') as f:
+            self.feat_extractor = pickle.load(f)
 
-    def getAction(self, gameState, numPacman):
+    def getAction(self, gameState, pacmanInfo):
         # print("Game state type:",type(gameState))
         # print("Game state:",gameState)
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
-
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        def expectimax(agent, depth, gameState):
-            if gameState.isLose() or gameState.isWin() or depth == self.depth:  # return the utility in case the defined depth is reached or the game is won/lost.
-                return self.evaluationFunction(gameState)
-            if agent < numPacman:  # maximizing for pacman
-                return max(expectimax(1, depth, gameState.generateSuccessor(agent, newState, numPacman)) for newState in gameState.getLegalActions(agent))
+        assert pacmanInfo != None
+        pacmanIndex = pacmanInfo['agentIndex']
+        numPacman = pacmanInfo['numPacman']
+        team_map = pacmanInfo['team_map']
+        #print "before: " + str(gameState.data.scores) + ", " + str(len(gameState.getFood().asList())) + ", " + str(gameState.data.score) + ", " + str(gameState.data.deadPacmans)
+        
+        def getLegalActions(agent, state, info, policy='all'):
+            legalActions = state.getLegalActions(agent, info)
+            if policy == 'random':
+                random.shuffle(legalActions)
+                return legalActions[:2]
+            return legalActions
+        
+        def expectimax(agent, depth, currentGameState):
+            #print "agent = " + str(agent) + " agentIndex: " + str(pacmanInfo['agentIndex'])
+            if pacmanIndex in currentGameState.data.deadPacmans or currentGameState.isWin() or currentGameState.isLose() or depth == self.depth:  # return the utility in case the defined depth is reached or the game is won/lost.
+                return self.evaluationFunction(currentGameState, pacmanInfo)
+            if agent == pacmanIndex:  # maximizing for pacman
+                legalActions = getLegalActions(agent, currentGameState, pacmanInfo, policy='random')
+                return max(expectimax(agent+1, depth, currentGameState.generateSuccessor(agent, new_action, numPacman, currentGameState.data.deadPacmans, pacmanInfo, team_map)) for new_action in legalActions)
             else:  # performing expectimax action for ghosts/chance nodes.
                 nextAgent = agent + 1  # calculate the next agent and increase depth accordingly.
+                while (nextAgent in currentGameState.data.deadPacmans):
+                    nextAgent += 1
                 if gameState.getNumAgents() == nextAgent:
                     nextAgent = 0
-                if nextAgent == 0:
+                if nextAgent == pacmanIndex:
                     depth += 1
-                return sum(expectimax(nextAgent, depth, gameState.generateSuccessor(agent, newState, numPacman)) for newState in gameState.getLegalActions(agent)) / float(len(gameState.getLegalActions(agent)))
+                if agent in currentGameState.data.deadPacmans:
+                    return expectimax(nextAgent, depth, currentGameState)
+                info = None
+                # info for another pacman. Not the one for whom actions
+                # are being evaluated
+                if agent < numPacman:
+                    info = copy.deepcopy(pacmanInfo)
+                    info['agentIndex'] = agent
+                    info['team'] = team_map[agent]
+                legalActions = getLegalActions(agent, currentGameState, info, policy='random')
+                return sum(expectimax(nextAgent, depth, currentGameState.generateSuccessor(agent, new_action, numPacman, currentGameState.data.deadPacmans, info, team_map)) for new_action in legalActions) / float(len(legalActions))
 
         """Performing maximizing task for the root node i.e. pacman"""
         maximum = float("-inf")
         action = Directions.WEST
-        for agentState in gameState.getLegalActions(0):
-            utility = expectimax(1, 0, gameState.generateSuccessor(0, agentState, numPacman))
+        for agent_action in gameState.getLegalActions(pacmanIndex, pacmanInfo):
+            utility = expectimax(pacmanIndex+1, 0, gameState.generateSuccessor(pacmanIndex, agent_action, numPacman, gameState.data.deadPacmans, pacmanInfo, team_map))
             if utility > maximum or maximum == float("-inf"):
                 maximum = utility
-                action = agentState
+                action = agent_action
+        #print "after: " + str(gameState.data.scores) + ", " + str(len(gameState.getFood().asList())) + ", " + str(gameState.data.score) + ", " + str(gameState.data.deadPacmans)
         return action
 
 class System0Agent(Agent):

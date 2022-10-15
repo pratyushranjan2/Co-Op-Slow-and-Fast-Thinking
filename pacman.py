@@ -47,6 +47,8 @@ import util, layout
 import sys, types, time, random, os
 import pandas as pd
 import  cPickle
+from datetime import datetime, timedelta
+import os
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -88,7 +90,7 @@ class GameState:
 #        GameState.explored.add(self)
         if self.isWin() or self.isLose(): return []
 
-        if pacmanInfo != None:  # Pacman is moving
+        if agentIndex < self.data.numPacman:  # Pacman is moving
             return PacmanRules.getLegalActions( self, pacmanInfo )
         else:
             return GhostRules.getLegalActions( self, agentIndex )
@@ -102,7 +104,6 @@ class GameState:
 
         # Copy current state
         state = GameState(self)
-        state.data.deadPacmans = deadPacmans
 
         # Let agent's logic deal with its action's effects on the board
         if agentIndex < numPacman:  # Pacman is moving
@@ -157,9 +158,12 @@ class GameState:
     def getPacmanPositions( self, numPacman, ignore=[] ):
         return [ self.data.agentStates[i].getPosition() for i in range(numPacman)\
                     if i not in ignore ]
+    
+    def getAllAgentPositions(self):
+        return [ self.data.agentStates[i].getPosition() for i in range(len(self.data.agentStates)) ]
 
     def getGhostStates( self ):
-        return self.data.agentStates[1:]
+        return self.data.agentStates[self.data.numPacman:]
 
     def getGhostState( self, agentIndex ):
         if agentIndex == 0 or agentIndex >= self.getNumAgents():
@@ -167,7 +171,7 @@ class GameState:
         return self.data.agentStates[agentIndex]
 
     def getGhostPosition( self, agentIndex ):
-        if agentIndex == 0:
+        if agentIndex < self.data.numPacman:
             raise Exception("Pacman's index passed to getGhostPosition")
         return self.data.agentStates[agentIndex].getPosition()
 
@@ -179,6 +183,9 @@ class GameState:
 
     def getScore( self ):
         return float(self.data.score)
+    
+    def getTeamScore(self, team):
+        return self.data.scores[team]
 
     def getCapsules(self):
         """
@@ -497,10 +504,11 @@ class GhostRules:
             state.data._eaten[agentIndex] = True
         else:
             state.data.deadPacmans.append(pacmanIndex)
-            print "Pacman #"+str(pacmanIndex)+" died"
+            state.data.scores[ team_map[pacmanIndex] ] -= 50
+            #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):
-                print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
+                #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
                 state.data.scores[ team_map[pacmanIndex] ] -= 500
                 state.data._lose = True
             
@@ -577,7 +585,7 @@ def readCommand( argv ):
                       help=default('the ghost agent TYPE in the ghostAgents module to use'),
                       metavar = 'TYPE', default='RandomGhost')
     parser.add_option('-k', '--numghosts', type='int', dest='numGhosts',
-                      help=default('The maximum number of ghosts to use'), default=4)
+                      help=default('The maximum number of ghosts to use'), default=10)
     parser.add_option('-z', '--zoom', type='float', dest='zoom',
                       help=default('Zoom the size of the graphics window'), default=1.0)
     parser.add_option('-f', '--fixRandomSeed', action='store_true', dest='fixRandomSeed',
@@ -621,9 +629,10 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent(options.pacman, noKeyboard)
-    pacman2Type = loadAgent(options.pacman, noKeyboard)
-    pacman3Type = loadAgent(options.pacman, noKeyboard)
+    pacman1Type = loadAgent('System1Agent', noKeyboard)
+    pacman2Type = loadAgent('System1Agent', noKeyboard)
+    pacman3Type = loadAgent('System2Agent', noKeyboard)
+    pacman4Type = loadAgent('System2Agent', noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -632,18 +641,22 @@ def readCommand( argv ):
     pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
     pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
     pacman3.index = 2
+    pacman4.index = 3
     pacman1.team = 0
     pacman2.team = 0
     pacman3.team = 1
+    pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3]
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
     mas_args['nteams'] = 2
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
+    pacman4.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -729,6 +742,7 @@ def replayGame( layout, actions, display ):
     display.finish()
 
 def par(i):
+    global save_df
     layout, pacman, ghosts, display, numGames, record, catchExceptions, timeout, numTraining = [i[1] for i in args.items()]
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
@@ -745,7 +759,15 @@ def par(i):
         gameDisplay = display
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, ghosts, gameDisplay, beQuiet, catchExceptions)
-    game.run()
+    scores, deadPacmans, steps_alive, is_win = game.run()
+    row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
+    
+    if os.path.isfile(save_file):
+        save_df = pd.read_csv(save_file)
+    save_df = pd.concat([save_df, row], axis=0, sort=False)
+    save_df.to_csv(save_file, index=False)
+    
+    print scores, deadPacmans, steps_alive, is_win
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
     score = game.state.getScore()
@@ -850,6 +872,14 @@ if __name__ == '__main__':
     See the usage string for more details.
     > python pacman.py --help
     """
+    # name of the file to save report for
+    # simulation session
+    now = datetime.now()
+    save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+                '_' + \
+                str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
     # like par(0), or par(0), par(1), par(2), ... sequentially.
@@ -857,14 +887,15 @@ if __name__ == '__main__':
     # runGames( **args )
 
     # print args.keys()
-    all_in = []
+    # all_in = []
     # print [i[1] for i in args.items()]
     # for i in range(args['numGames']):
     #     all_in.append((i, [i[1] for i in args.items()]))
     # print range(args['numGames'])
-    #pool = Pool(processes=14)
-    #result = pool.map(par, range(args['numGames']))
-    par(0)
+    # pool = Pool(processes=14)
+    # result = pool.map(par, range(args['numGames']))
+    for i in range(args['numGames']):
+        par(i)
     #print result[:2]
     #print len(result)
 

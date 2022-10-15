@@ -403,7 +403,7 @@ class GameStateData:
             self.layout = prevState.layout
             self._eaten = prevState._eaten
             self.score = prevState.score
-            self.scores = prevState.scores
+            self.scores = self.copyPacmanScores( prevState.scores )
             self.numPacman = prevState.numPacman
 
         self._foodEaten = None
@@ -413,7 +413,7 @@ class GameStateData:
         self._lose = False
         self._win = False
         self.scoreChange = 0
-        self.deadPacmans = []
+        self.deadPacmans = [] if prevState==None else self.copyDeadPacmans(prevState.deadPacmans)
 
     def deepCopy( self ):
         state = GameStateData( self )
@@ -430,6 +430,18 @@ class GameStateData:
         for agentState in agentStates:
             copiedStates.append( agentState.copy() )
         return copiedStates
+    
+    def copyPacmanScores( self, scores ):
+        copiedScores = []
+        for score in scores:
+            copiedScores.append( score )
+        return copiedScores
+
+    def copyDeadPacmans( self, deadPacmans ):
+        copiedDeadPacmans = []
+        for deadPacman in deadPacmans:
+            copiedDeadPacmans.append( deadPacman )
+        return copiedDeadPacmans
 
     def __eq__( self, other ):
         """
@@ -557,6 +569,7 @@ class Game:
         self.totalMasAgentTimes = [0 for agent in mas_agents]
         self.totalAgentTimeWarnings = [0 for agent in agents]
         self.totalMasAgentTimeWarnings = [0 for agent in agents]
+        self.steps_alive = [0]*numPacman
         self.agentTimeout = False
         import cStringIO
         self.agentOutput = [cStringIO.StringIO() for agent in agents]
@@ -647,9 +660,13 @@ class Game:
         while not self.gameOver:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
+<<<<<<< HEAD
             positions = self.state.getPacmanPositions()
             ghostPositions = self.state.getGhostPositions()
             print [positions, self.state.data.deadPacmans, self.state.data.scores]
+=======
+            # positions = self.state.getPacmanPositions(self.numPacman)
+>>>>>>> 5a18382ac403281a2a48b3f0dea9d64a8675f5ff
             if agentIndex in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
@@ -728,7 +745,7 @@ class Game:
             else:
                 #print "curr = " + str(agentIndex)
                 isPacman = agentIndex < self.numPacman
-                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team}
+                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team, 'team_map': self.team_map}
                 action = agent.getAction(observation, pacmanInfo)
             self.unmute()
 
@@ -750,6 +767,15 @@ class Game:
             self.display.update( self.state.data )
             ###idx = agentIndex - agentIndex % 2 + 1
             ###self.display.update( self.state.makeObservation(idx).data )
+            
+            # Update pacman agent total steps alive
+            for i in range(len(self.steps_alive)):
+                if i not in self.state.data.deadPacmans:
+                    self.steps_alive[i] += 1
+            
+            # Print some info 
+            # positions = self.state.getAllAgentPositions()
+            # print positions, self.state.data.deadPacmans, self.state.data.scores, self.steps_alive
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
@@ -774,4 +800,10 @@ class Game:
                     self._agentCrash(agentIndex)
                     self.unmute()
                     return
+<<<<<<< HEAD
         self.display.finish()
+=======
+        self.display.finish()
+
+        return self.state.data.scores, self.state.data.deadPacmans, self.steps_alive, self.state.data._win
+>>>>>>> 5a18382ac403281a2a48b3f0dea9d64a8675f5ff
