@@ -64,7 +64,10 @@ class DirectionalGhost( GhostAgent ):
         actionVectors = [Actions.directionToVector( a, speed ) for a in legalActions]
         newPositions = [( pos[0]+a[0], pos[1]+a[1] ) for a in actionVectors]
         # pacmanPosition = state.getPacmanPosition()
-        pacmanPositions = state.getPacmanPositions(state.data.numPacman, ignore=state.data.deadPacmans)
+        if state.data.biasedGhost:
+            pacmanPositions = state.getPacmanTeamPositions( team=2, ignore=state.data.deadPacmans )
+        else:
+            pacmanPositions = state.getPacmanPositions(state.data.numPacman, ignore=state.data.deadPacmans)
 
         # updated distances to pacman for multiple pacmans
         # the distance corresponding to each legal action is
