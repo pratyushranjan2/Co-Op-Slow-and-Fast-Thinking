@@ -530,6 +530,7 @@ class GhostRules:
             state.data._eaten[agentIndex] = True
         else:
             state.data.deadPacmans.append(pacmanIndex)
+            state.data.agentStates[pacmanIndex].alive = False
             state.data.scores[ team_map[pacmanIndex] ] -= 50
             #print "Pacman #"+str(pacmanIndex)+" died"
             
@@ -655,7 +656,7 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System1Agent', noKeyboard)
+    pacman1Type = loadAgent('BlockingAgent', noKeyboard)
     pacman2Type = loadAgent('System1Agent', noKeyboard)
     pacman3Type = loadAgent('System1Agent', noKeyboard)
     pacman4Type = loadAgent('System1Agent', noKeyboard)

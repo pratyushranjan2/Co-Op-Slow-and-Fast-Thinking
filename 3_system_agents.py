@@ -22,7 +22,7 @@ import numpy as np
 import random
 import copy
 
-from game import Agent
+from game import Agent, Actions
 from qlearningAgents import ApproximateQAgent
 
 
@@ -87,6 +87,37 @@ class System1Agent(Agent): #system 1 is capable of gameplay on its own
     def getAction(self,gameState, pacmanInfo):
         assert pacmanInfo != None
         return self.q_learning_agent.getAction(gameState, pacmanInfo)
+
+class BlockingAgent(Agent):
+    def __init__(self):
+        self.sys1 = System1Agent()
+        self.activateSys1 = False
+    
+    def getAction(self, gameState, pacmanInfo):
+        if self.activateSys1:
+            return self.sys1.getAction(gameState, pacmanInfo)
+        
+        pacmanIndex = pacmanInfo['agentIndex']
+        legalActions = gameState.getLegalActions(pacmanIndex, pacmanInfo)
+
+        pos = gameState.getPacmanPosition(self.index)
+        speed = 1
+
+        actionVectors = [Actions.directionToVector( a, speed ) for a in legalActions]
+        newPositions = [( pos[0]+a[0], pos[1]+a[1] ) for a in actionVectors]
+
+        opponentPacmanPositions = gameState.getPacmanTeamPositions(team=2,\
+                                    ignore=gameState.data.deadPacmans)
+        distancesToOpponents = []
+        for pos in newPositions:
+            min_distance = min([manhattanDistance(pos, opponentPos) for opponentPos in opponentPacmanPositions])
+            distancesToOpponents.append(min_distance)
+        
+        bestDist = min(distancesToOpponents)
+        bestActions = [action for action, dist in zip(legalActions, distancesToOpponents)\
+                                    if dist == bestDist]
+        
+        return random.choice(bestActions)
 
 class System2Agent(Agent): #system 2 is capable of gameplay on its own
     """
