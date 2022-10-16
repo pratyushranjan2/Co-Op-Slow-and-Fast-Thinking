@@ -15,6 +15,7 @@
 """
 Pacman.py holds the logic for the classic pacman game along with the main
 code to run a game.  This file is divided into three sections:
+
   (i)  Your interface to the pacman world:
           Pacman is a complex environment.  You probably don't want to
           read through all of the code we wrote to make the game runs
@@ -22,16 +23,19 @@ code to run a game.  This file is divided into three sections:
           that you will need to understand in order to complete the
           project.  There is also some code in game.py that you should
           understand.
+
   (ii)  The hidden secrets of pacman:
           This section contains all of the logic code that the pacman
           environment uses to decide who can move where, who dies when
           things collide, etc.  You shouldn't need to read this section
           of code, but you can if you want.
+
   (iii) Framework to start a game:
           The final section contains the code for reading the command
           you use to set up the game, then starting up a new game, along with
           linking in all the external parts (agent functions, graphics).
           Check this section out to see all the options available to you.
+
 To play your first game, type 'python pacman.py' from the command line.
 The keys are 'a', 's', 'd', and 'w' to move (or arrow keys).  Have fun!
 """
@@ -50,6 +54,49 @@ import  cPickle
 from datetime import datetime, timedelta
 import os
 
+def readFileInput():
+
+    f = open("configs.txt", 'r')
+
+    # agents in team 1
+    team1_size = int(f.readline())
+    
+    team1 = []
+    solver1 = []
+
+    for i in range(team1_size):
+        [x, y, solver] = [int(i) for i in f.readline().split()]
+        team1.append([x,y])
+        solver1.append(solver)
+
+    # # agents in team 1 that solely block
+    # blockers = team1+1
+
+    # while(blockers<0 or blockers>team1):
+    #     blockers = input("Number of agents in team 1 purposed to block: ")
+
+    # agents in team 2
+    team2_size = int(f.readline())
+    
+    team2 = []
+    solver2 = []
+
+    for i in range(team2_size):
+        [x, y, solver] = [int(i) for i in f.readline().split()]
+        team2.append([x,y])
+        solver2.append(solver)
+
+    # ghosts
+    ghosts_size = int(f.readline())
+    ghosts = []
+
+    for i in range(ghosts_size):
+        [x, y] = [int(i) for i in f.readline().split()]
+        ghosts.append([x,y])
+    
+    return [team1, solver1, team2, solver2, ghosts]
+
+
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
 ###################################################
@@ -58,11 +105,14 @@ class GameState:
     """
     A GameState specifies the full game state, including the food, capsules,
     agent configurations and score changes.
+
     GameStates are used by the Game object to capture the actual state of the game and
     can be used by agents to reason about the game.
+
     Much of the information in a GameState is stored in a GameStateData object.  We
     strongly suggest that you access that data via the accessor methods below rather
     than referring to the GameStateData object directly.
+
     Note that in classic Pacman, Pacman is always agent 0.
     """
 
@@ -143,6 +193,7 @@ class GameState:
     def getPacmanState( self, agentIndex=0 ):
         """
         Returns an AgentState object for pacman (in game.py)
+
         state.pos gives the current position
         state.direction gives the travel vector
         """
@@ -199,8 +250,10 @@ class GameState:
     def getFood(self):
         """
         Returns a Grid of boolean food indicator variables.
+
         Grids can be accessed via list notation, so to check
         if there is food at (x,y), just call
+
         currentFood = state.getFood()
         if currentFood[x][y] == True: ...
         """
@@ -209,8 +262,10 @@ class GameState:
     def getWalls(self):
         """
         Returns a Grid of boolean wall indicator variables.
+
         Grids can be accessed via list notation, so to check
         if there is a wall at (x,y), just call
+
         walls = state.getWalls()
         if walls[x][y] == True: ...
         """
@@ -629,34 +684,70 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System1Agent', noKeyboard)
-    pacman2Type = loadAgent('System1Agent', noKeyboard)
-    pacman3Type = loadAgent('System2Agent', noKeyboard)
-    pacman4Type = loadAgent('System2Agent', noKeyboard)
+    
+    # pacman1Type = loadAgent('System1Agent', noKeyboard)
+    # pacman2Type = loadAgent('System1Agent', noKeyboard)
+    # pacman3Type = loadAgent('System2Agent', noKeyboard)
+    # pacman4Type = loadAgent('System2Agent', noKeyboard)
+
     agentOpts = parseAgentArgs(options.agentArgs)
+    
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
+    
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
-    pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
-    pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman1.index = 0
-    pacman2.index = 1
-    pacman3.index = 2
-    pacman4.index = 3
-    pacman1.team = 0
-    pacman2.team = 0
-    pacman3.team = 1
-    pacman4.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
+
+    # pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
+    # pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
+    # pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    # pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    # pacman1.index = 0
+    # pacman2.index = 1
+    # pacman3.index = 2
+    # pacman4.index = 3
+    # pacman1.team = 0
+    # pacman2.team = 0
+    # pacman3.team = 1
+    # pacman4.team = 1
+    # mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
+    # mas_args['nteams'] = 2
+    # pacman1.numPacman = len(mas_args['pacmans'])
+    # pacman2.numPacman = len(mas_args['pacmans'])
+    # pacman3.numPacman = len(mas_args['pacmans'])
+    # pacman4.numPacman = len(mas_args['pacmans'])
+
+    config = readFileInput()
+    print(config)
+    ind = 0
+
+    mas_args['pacmans'] = []
     mas_args['nteams'] = 2
-    pacman1.numPacman = len(mas_args['pacmans'])
-    pacman2.numPacman = len(mas_args['pacmans'])
-    pacman3.numPacman = len(mas_args['pacmans'])
-    pacman4.numPacman = len(mas_args['pacmans'])
+
+    # team1
+    for i in range(len(config[0])):
+        pacman_type = loadAgent("System"+str(config[1][i])+"Agent", noKeyboard)
+        pacman_ind = pacman_type(**agentOpts)
+        pacman_ind.index = ind
+        pacman_ind.team = 0
+        mas_args['pacmans'].append(pacman_ind)
+
+        ind += 1
+    
+    # team2
+    for i in range(len(config[2])):
+        pacman_type = loadAgent("System"+str(config[3][i])+"Agent", noKeyboard)
+        pacman_ind = pacman_type(**agentOpts)
+        pacman_ind.index = ind
+        pacman_ind.team = 1
+        mas_args['pacmans'].append(pacman_ind)
+
+        ind += 1
+    
+    for pm in mas_args['pacmans']:
+        pm.numPacman = ind
+
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -710,16 +801,25 @@ def loadAgent(pacman, nographics):
     pythonPathDirs.append('.')
 
     for moduleDir in pythonPathDirs:
-        if not os.path.isdir(moduleDir): continue
+        if not os.path.isdir(moduleDir):
+            continue
+        # print(moduleDir)
+
         moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('gents.py')]
+        # print(moduleNames)
+
         for modulename in moduleNames:
+            # print(modulename)
             try:
                 module = __import__(modulename[:-3])
+                # print(module)
             except ImportError:
+                # print("Error here", modulename, ImportError)
                 continue
             if pacman in dir(module):
                 if nographics and modulename == 'keyboardAgents.py':
                     raise Exception('Using the keyboard requires graphics (not text display)')
+                # print(pacman + " in " + module)
                 return getattr(module, pacman)
     raise Exception('The agent ' + pacman + ' is not specified in any *Agents.py.')
 
@@ -868,8 +968,11 @@ if __name__ == '__main__':
     """
     The main function called when pacman.py is run
     from the command line:
+
     > python pacman.py
+
     See the usage string for more details.
+
     > python pacman.py --help
     """
     # name of the file to save report for
