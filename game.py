@@ -429,6 +429,7 @@ class GameStateData:
             self.numPacman = prevState.numPacman
             self.team1 = self.copyTeam1( prevState.team1 )
             self.team2 = self.copyTeam2( prevState.team2 )
+            self.biasedGhost = prevState.biasedGhost
 
         self._foodEaten = None
         self._foodAdded = None
@@ -437,7 +438,6 @@ class GameStateData:
         self._lose = False
         self._win = False
         self.scoreChange = 0
-        self.biasedGhost = True
         self.deadPacmans = [] if prevState==None else self.copyDeadPacmans(prevState.deadPacmans)
 
     def deepCopy( self ):
@@ -550,7 +550,7 @@ class GameStateData:
             return '3'
         return 'E'
 
-    def initialize( self, layout, nteams, team1, team2, numGhostAgents ):
+    def initialize( self, layout, nteams, team1, team2, biasedGhost, numGhostAgents ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
@@ -564,6 +564,7 @@ class GameStateData:
         self.numPacman = layout.numPacman
         self.team1 = team1
         self.team2 = team2
+        self.biasedGhost = biasedGhost
 
         self.agentStates = []
         numGhosts = 0
@@ -585,7 +586,7 @@ class Game:
     The Game manages the control flow, soliciting actions from agents.
     """
 
-    def __init__( self, agents, mas_agents, numPacman, display, rules, startingIndex=0, muteAgents=False, catchExceptions=False ):
+    def __init__( self, agents, mas_agents, numPacman, biasedGhost, shuffleTurns, display, rules, startingIndex=0, muteAgents=False, catchExceptions=False ):
         self.agentCrashed = False
         self.agents = agents
         self.mas_agents = mas_agents
@@ -607,6 +608,7 @@ class Game:
         import cStringIO
         self.agentOutput = [cStringIO.StringIO() for agent in agents]
         self.masAgentOutput = [cStringIO.StringIO() for agent in mas_agents]
+        self.shuffleTurns = shuffleTurns
 
     def getProgress(self):
         if self.gameOver:

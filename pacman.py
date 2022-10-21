@@ -53,6 +53,7 @@ import pandas as pd
 import  cPickle
 from datetime import datetime, timedelta
 import os
+import traceback
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -287,11 +288,11 @@ class GameState:
 
         return str(self.data)
 
-    def initialize( self, layout, nteams, team1, team2, numGhostAgents=1000 ):
+    def initialize( self, layout, nteams, team1, team2, biasedGhost, numGhostAgents=1000 ):
         """
         Creates an initial game state from a layout array (see layout.py).
         """
-        self.data.initialize(layout, nteams, team1, team2, numGhostAgents)
+        self.data.initialize(layout, nteams, team1, team2, biasedGhost, numGhostAgents)
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -311,14 +312,14 @@ class ClassicGameRules:
     def __init__(self, timeout=30):
         self.timeout = timeout
 
-    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, ghostAgents, display, quiet = False, catchExceptions=False):
+    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, biasedGhost, shuffleTurns, ghostAgents, display, quiet = False, catchExceptions=False):
         agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
         mas_agents = [agent for agent in pacmanAgents] + ghostAgents[:layout.getNumGhosts()]
         team1 = [agent.index for agent in pacmanAgents if agent.team == 0]
         team2 = [agent.index for agent in pacmanAgents if agent.team == 1]
         initState = GameState()
-        initState.initialize( layout, nteams, team1, team2, len(ghostAgents) )
-        game = Game(agents, mas_agents, layout.numPacman, display, self, catchExceptions=catchExceptions)
+        initState.initialize( layout, nteams, team1, team2, biasedGhost, len(ghostAgents) )
+        game = Game(agents, mas_agents, layout.numPacman, biasedGhost, shuffleTurns, display, self, startingIndex=0, catchExceptions=catchExceptions)
         game.state = initState
         game.state.pacmanAgents = pacmanAgents
         self.initialState = initState.deepCopy()
@@ -656,7 +657,7 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('BlockingAgent', noKeyboard)
+    pacman1Type = loadAgent('System1Agent', noKeyboard)
     pacman2Type = loadAgent('System1Agent', noKeyboard)
     pacman3Type = loadAgent('System1Agent', noKeyboard)
     pacman4Type = loadAgent('System1Agent', noKeyboard)
@@ -680,6 +681,8 @@ def readCommand( argv ):
     args['pacman'] = pacman
     mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
     mas_args['nteams'] = 2
+    mas_args['biasedGhost'] = False
+    mas_args['shuffleTurns'] = False
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
@@ -774,6 +777,8 @@ def par(i):
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
     nteams = mas_args['nteams']
+    biasedGhost = mas_args['biasedGhost']
+    shuffleTurns = mas_args['shuffleTurns']
 
     rules = ClassicGameRules(timeout)
     start_time = time.time()
@@ -785,14 +790,15 @@ def par(i):
     else:
         gameDisplay = display
         rules.quiet = False
-    game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, ghosts, gameDisplay, beQuiet, catchExceptions)
+    game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
     
-    # if os.path.isfile(save_file):
-    #     save_df = pd.read_csv(save_file)
-    # save_df = pd.concat([save_df, row], axis=0, sort=False)
-    # save_df.to_csv(save_file, index=False)
+    if save:
+        if os.path.isfile(save_file):
+            save_df = pd.read_csv(save_file)
+        save_df = pd.concat([save_df, row], axis=0, sort=False)
+        save_df.to_csv(save_file, index=False)
     
     print scores, deadPacmans
     elapsed_time = time.time() - start_time
@@ -905,11 +911,20 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
-    # now = datetime.now()
-    # save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
-    #             '_' + \
-    #             str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
-    # save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+    save = False
+    if save:
+        now = datetime.now()
+        save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+                    '_' + \
+                    str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+        info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+                    '_' + \
+                    str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
+        info = 'nT1=2\nnT2=2\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\n'
+        f = open(info_file, 'w')
+        f.write(info+'\n')
+        f.close()
+        save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
 
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
@@ -926,8 +941,12 @@ if __name__ == '__main__':
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
     par(0)
+    # print "save = " + str(save)
     # for i in range(args['numGames']):
-    #     par(i)
+    #     try:
+    #         par(i)
+    #     except:
+    #         print 'sim-' + str(i+1) + 'failed'
     #print result[:2]
     #print len(result)
 
