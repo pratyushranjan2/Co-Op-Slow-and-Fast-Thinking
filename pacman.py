@@ -312,14 +312,14 @@ class ClassicGameRules:
     def __init__(self, timeout=30):
         self.timeout = timeout
 
-    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, biasedGhost, shuffleTurns, ghostAgents, display, quiet = False, catchExceptions=False):
+    def newGame( self, layout, pacmanAgent, pacmanAgents, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghostAgents, display, quiet = False, catchExceptions=False):
         agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
         mas_agents = [agent for agent in pacmanAgents] + ghostAgents[:layout.getNumGhosts()]
         team1 = [agent.index for agent in pacmanAgents if agent.team == 0]
         team2 = [agent.index for agent in pacmanAgents if agent.team == 1]
         initState = GameState()
         initState.initialize( layout, nteams, team1, team2, biasedGhost, len(ghostAgents) )
-        game = Game(agents, mas_agents, layout.numPacman, biasedGhost, shuffleTurns, display, self, startingIndex=0, catchExceptions=catchExceptions)
+        game = Game(agents, mas_agents, layout.numPacman, biasedGhost, shuffleTurns, display, self, startingIndex=startingIndex, catchExceptions=catchExceptions)
         game.state = initState
         game.state.pacmanAgents = pacmanAgents
         self.initialState = initState.deepCopy()
@@ -681,8 +681,11 @@ def readCommand( argv ):
     args['pacman'] = pacman
     mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
     mas_args['nteams'] = 2
+    numPacman = len(mas_args['pacmans'])
+    mas_args['numPacman'] = numPacman
     mas_args['biasedGhost'] = False
     mas_args['shuffleTurns'] = False
+    mas_args['startingIndex'] = 0
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
@@ -695,8 +698,6 @@ def readCommand( argv ):
 
     # Choose a ghost agent
     ghostType = loadAgent(options.ghost, noKeyboard)
-    numPacman = len(mas_args['pacmans'])
-    mas_args['numPacman'] = numPacman
     #args['ghosts'] = [ghostType( i+1 ) for i in range( options.numGhosts )]
     args['ghosts'] = [ghostType( i+numPacman ) for i in range( options.numGhosts )]
 
@@ -779,6 +780,7 @@ def par(i):
     nteams = mas_args['nteams']
     biasedGhost = mas_args['biasedGhost']
     shuffleTurns = mas_args['shuffleTurns']
+    startingIndex = mas_args['startingIndex']
 
     rules = ClassicGameRules(timeout)
     start_time = time.time()
@@ -790,7 +792,7 @@ def par(i):
     else:
         gameDisplay = display
         rules.quiet = False
-    game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, ghosts, gameDisplay, beQuiet, catchExceptions)
+    game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
     
