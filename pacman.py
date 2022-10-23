@@ -661,6 +661,10 @@ def readCommand( argv ):
     pacman2Type = loadAgent('System1Agent', noKeyboard)
     pacman3Type = loadAgent('System1Agent', noKeyboard)
     pacman4Type = loadAgent('System1Agent', noKeyboard)
+    pacman5Type = loadAgent('System1Agent', noKeyboard)
+    pacman6Type = loadAgent('System1Agent', noKeyboard)
+    pacman7Type = loadAgent('System1Agent', noKeyboard)
+    pacman8Type = loadAgent('System1Agent', noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -670,16 +674,28 @@ def readCommand( argv ):
     pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
     pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman5 = pacman5Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman6 = pacman6Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman7 = pacman7Type(**agentOpts) # Instantiate Pacman3 with agentArgs
+    pacman8 = pacman8Type(**agentOpts) # Instantiate Pacman3 with agentArgs
     pacman1.index = 0
     pacman2.index = 1
     pacman3.index = 2
     pacman4.index = 3
+    pacman5.index = 4
+    pacman6.index = 5
+    pacman7.index = 6
+    pacman8.index = 7
     pacman1.team = 0
     pacman2.team = 0
     pacman3.team = 1
     pacman4.team = 1
+    pacman5.team = 1
+    pacman6.team = 1
+    pacman7.team = 1
+    pacman8.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
     mas_args['nteams'] = 2
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
@@ -690,6 +706,10 @@ def readCommand( argv ):
     pacman2.numPacman = len(mas_args['pacmans'])
     pacman3.numPacman = len(mas_args['pacmans'])
     pacman4.numPacman = len(mas_args['pacmans'])
+    pacman5.numPacman = len(mas_args['pacmans'])
+    pacman6.numPacman = len(mas_args['pacmans'])
+    pacman7.numPacman = len(mas_args['pacmans'])
+    pacman8.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -913,7 +933,7 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
-    save = False
+    save = True
     if save:
         now = datetime.now()
         save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
@@ -922,7 +942,7 @@ if __name__ == '__main__':
         info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=2\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\n'
+        info = 'nT1=2\nnT2=6\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\n'
         f = open(info_file, 'w')
         f.write(info+'\n')
         f.close()
@@ -942,13 +962,13 @@ if __name__ == '__main__':
     # print range(args['numGames'])
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
-    par(0)
+    # par(0)
     # print "save = " + str(save)
-    # for i in range(args['numGames']):
-    #     try:
-    #         par(i)
-    #     except:
-    #         print 'sim-' + str(i+1) + 'failed'
+    for i in range(args['numGames']):
+        try:
+            par(i)
+        except:
+            print 'sim-' + str(i+1) + 'failed'
     #print result[:2]
     #print len(result)
 
