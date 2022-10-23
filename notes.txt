@@ -1,1 +1,6 @@
 epsilon is set in the constructor of System1.
+
+If agent shuffling is done successfully, then MCTS
+might need some fixings, as it assumed, that every-
+time after the last pacman some ghost will be encou-
+ntered.

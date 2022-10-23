@@ -20,10 +20,12 @@
 # John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
+from numpy import mask_indices
 from util import *
 import time, os
 import traceback
 import sys
+import random
 
 #######################
 # Parts worth reading #
@@ -696,13 +698,16 @@ class Game:
             # Fetch the next agent
             # agent = self.agents[agentIndex]
             # positions = self.state.getPacmanPositions(self.numPacman)
-            if agentIndex in self.state.data.deadPacmans:
+            if self.shuffleTurns and agentIndex == 0:
+                # shuffle
+                random.shuffle(self.mas_agents)
+            agent = self.mas_agents[agentIndex]
+            if agent.index in self.state.data.deadPacmans:
                 # Track progress
                 if agentIndex == numAgents + 1: self.numMoves += 1
                 # Next agent
                 agentIndex = ( agentIndex + 1 ) % numAgents
                 continue
-            agent = self.mas_agents[agentIndex]
             move_time = 0
             skip_action = False
             # Generate an observation of the state
@@ -730,7 +735,7 @@ class Game:
 
             # Solicit an action
             action = None
-            self.mute(agentIndex)
+            self.mute(agent.index)
             if self.catchExceptions:
                 try:
                     timed_func = TimeoutFunction(agent.getAction, int(self.rules.getMoveTimeout(agentIndex)) - int(move_time))
@@ -773,13 +778,14 @@ class Game:
                     return
             else:
                 #print "curr = " + str(agentIndex)
-                isPacman = agentIndex < self.numPacman
-                if isPacman: pacmanInfo = {'agentIndex': agentIndex, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team, 'team_map': self.team_map}
+                isPacman = agent.index < self.numPacman
+                pacmanInfo = None
+                if isPacman: pacmanInfo = {'agentIndex': agent.index, 'numPacman': self.numPacman, 'isPacman': True, 'team': agent.team, 'team_map': self.team_map}
                 action = agent.getAction(observation, pacmanInfo)
             self.unmute()
 
             # Execute the action
-            self.moveHistory.append( (agentIndex, action) )
+            self.moveHistory.append( (agent.index, action) )
             if self.catchExceptions:
                 try:
                     self.state = self.state.generateSuccessor( agentIndex, action )
@@ -789,7 +795,7 @@ class Game:
                     self.unmute()
                     return
             else:
-                self.state = self.state.generateSuccessor( agentIndex, action, self.numPacman, self.state.data.deadPacmans, pacmanInfo, self.team_map )
+                self.state = self.state.generateSuccessor( agent.index, action, self.numPacman, self.state.data.deadPacmans, pacmanInfo, self.team_map )
 
             #print self.state.data.scores
             # Change the display
@@ -803,8 +809,8 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
-            #positions = self.state.getAllAgentPositions()
-            #print positions, self.state.data.scores, self.state.data.deadPacmans
+            # positions = self.state.getAllAgentPositions()
+            # print positions, self.state.data.scores, self.state.data.deadPacmans
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
@@ -818,15 +824,15 @@ class Game:
 
         # inform a learning agent of the game result
         # for agentIndex, agent in enumerate(self.agents):
-        for agentIndex, agent in enumerate(self.mas_agents):
+        for agent in self.mas_agents:
             if "final" in dir( agent ) :
                 try:
-                    self.mute(agentIndex)
+                    self.mute(agent.index)
                     agent.final( self.state )
                     self.unmute()
                 except Exception,data:
                     if not self.catchExceptions: raise
-                    self._agentCrash(agentIndex)
+                    self._agentCrash(agent.index)
                     self.unmute()
                     return
         self.display.finish()

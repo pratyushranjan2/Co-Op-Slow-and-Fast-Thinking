@@ -700,7 +700,7 @@ def readCommand( argv ):
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
     mas_args['biasedGhost'] = False
-    mas_args['shuffleTurns'] = False
+    mas_args['shuffleTurns'] = True
     mas_args['startingIndex'] = 0
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
@@ -933,7 +933,7 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
-    save = True
+    save = False
     if save:
         now = datetime.now()
         save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
@@ -962,13 +962,15 @@ if __name__ == '__main__':
     # print range(args['numGames'])
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
-    # par(0)
+    par(0)
     # print "save = " + str(save)
-    for i in range(args['numGames']):
-        try:
-            par(i)
-        except:
-            print 'sim-' + str(i+1) + 'failed'
+    
+    # for i in range(args['numGames']):
+    #     try:
+    #         par(i)
+    #     except:
+    #         print 'sim-' + str(i+1) + 'failed'
+    
     #print result[:2]
     #print len(result)
 
