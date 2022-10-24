@@ -8,4 +8,4 @@ Currently, there are 3 types of pacman agents, -
 3. Blocking Agent: These agents block the agents of opponent teams to prevent them from collecting rewards.
 More agents will be developed subsequently.
 
-To run the simulation, the shell script ""run.sh"" can be used.
+To run the simulation, the shell script ```run.sh``` can be used.
