@@ -695,7 +695,7 @@ def readCommand( argv ):
     pacman7.team = 1
     pacman8.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]#, pacman5, pacman6, pacman7, pacman8]
     mas_args['nteams'] = 2
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
@@ -889,10 +889,10 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
             data_file_name = data_file_name
             if(os.stat(data_file_name).st_size != 0):
                 df.loc[len(columns)] = rows
-                df.to_csv (data_file_name, index = None,mode='a', header=False)
+                df.to_csv(data_file_name, index = None,mode='a', header=False)
             else:
                 df.append(rows)
-                df.to_csv (data_file_name, index = None, header=True)
+                df.to_csv(data_file_name, index = None, header=True)
 
         if not beQuiet: games.append(game)
 
@@ -933,7 +933,7 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
-    save = False
+    save = True
     if save:
         now = datetime.now()
         save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
@@ -942,7 +942,7 @@ if __name__ == '__main__':
         info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=6\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\n'
+        info = 'nT1=2\nnT2=2\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\nshuffling=True\n'
         f = open(info_file, 'w')
         f.write(info+'\n')
         f.close()
@@ -962,14 +962,14 @@ if __name__ == '__main__':
     # print range(args['numGames'])
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
-    par(0)
-    # print "save = " + str(save)
+    # par(0)
+    print("save = " + str(save))
     
-    # for i in range(args['numGames']):
-    #     try:
-    #         par(i)
-    #     except:
-    #         print 'sim-' + str(i+1) + 'failed'
+    for i in range(args['numGames']):
+        try:
+            par(i)
+        except:
+            print('sim-' + str(i+1) + 'failed')
     
     #print result[:2]
     #print len(result)
