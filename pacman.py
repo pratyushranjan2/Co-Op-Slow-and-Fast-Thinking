@@ -54,6 +54,7 @@ import  cPickle
 from datetime import datetime, timedelta
 import os
 import traceback
+from ast import literal_eval
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -814,9 +815,11 @@ def par(i):
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
-    row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
+    team1Total.append(scores[0])
+    team2Total.append(scores[1])
     
     if save:
+        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
         if os.path.isfile(save_file):
             save_df = pd.read_csv(save_file)
         save_df = pd.concat([save_df, row], axis=0, sort=False)
@@ -933,6 +936,8 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
+    team1Total = []
+    team2Total = []
     save = True
     if save:
         now = datetime.now()
@@ -970,6 +975,14 @@ if __name__ == '__main__':
             par(i)
         except:
             print('sim-' + str(i+1) + 'failed')
+    avgTeam1Score = sum(team1Total)/len(team1Total)
+    avgTeam2Score = sum(team2Total)/len(team2Total)
+    winTeam1 = [team1Total[i]>team2Total[i] for i in range(len(team1Total))]
+    winRateTeam1 = sum(winTeam1)*1.0/len(team1Total)
+    print(sum(winTeam1), len(winTeam1))
+    print('avg scores: ' + str(avgTeam1Score) + ' ' + str(avgTeam2Score))
+    print('win rate: ' + str(winRateTeam1) + ' ' + str(1-winRateTeam1))
+
     
     #print result[:2]
     #print len(result)
