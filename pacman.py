@@ -658,10 +658,10 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System2Agent', noKeyboard)
-    pacman2Type = loadAgent('System2Agent', noKeyboard)
-    pacman3Type = loadAgent('System1Agent', noKeyboard)
-    pacman4Type = loadAgent('System1Agent', noKeyboard)
+    pacman1Type = loadAgent('BlockingAgent', noKeyboard)
+    pacman2Type = loadAgent('BlockingAgent', noKeyboard)
+    pacman3Type = loadAgent('BlockingAgent', noKeyboard)
+    pacman4Type = loadAgent('BlockingAgent', noKeyboard)
     pacman5Type = loadAgent('System1Agent', noKeyboard)
     pacman6Type = loadAgent('System1Agent', noKeyboard)
     pacman7Type = loadAgent('System1Agent', noKeyboard)
@@ -689,19 +689,19 @@ def readCommand( argv ):
     pacman8.index = 7
     pacman1.team = 0
     pacman2.team = 0
-    pacman3.team = 1
-    pacman4.team = 1
+    pacman3.team = 0
+    pacman4.team = 0
     pacman5.team = 1
     pacman6.team = 1
     pacman7.team = 1
     pacman8.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]#, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
-    mas_args['nteams'] = 1
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
+    mas_args['nteams'] = 2
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
-    mas_args['biasedGhost'] = False
-    mas_args['shuffleTurns'] = False
+    mas_args['biasedGhost'] = True
+    mas_args['shuffleTurns'] = True
     mas_args['startingIndex'] = 0
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
@@ -816,7 +816,7 @@ def par(i):
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     team1Total.append(scores[0])
-    #team2Total.append(scores[1])
+    team2Total.append(scores[1])
     
     if save:
         row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
@@ -947,7 +947,7 @@ if __name__ == '__main__':
         info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=1\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
+        info = 'nT1=4\nnT2=4\nT1S1=0\nT2S1=4\nT1S2=0\nT2S2=0\nT1B1=4\nnG=1\nbiased_ghost=True\nshuffling=True\n'
         f = open(info_file, 'w')
         f.write(info+'\n')
         f.close()
@@ -969,6 +969,7 @@ if __name__ == '__main__':
     # result = pool.map(par, range(args['numGames']))
     
     # par(0)
+    # exit(0)
     
     print("save = " + str(save))
     for i in range(args['numGames']):
@@ -978,12 +979,11 @@ if __name__ == '__main__':
         except:
             print('sim-' + str(i+1) + 'failed')
     avgTeam1Score = sum(team1Total)/len(team1Total)
-    print('avg score: ' + str(avgTeam1Score))
-    #avgTeam2Score = sum(team2Total)/len(team2Total)
-    #winTeam1 = [team1Total[i]>team2Total[i] for i in range(len(team1Total))]
-    #winRateTeam1 = sum(winTeam1)*1.0/len(team1Total)
-    #print('avg scores: ' + str(avgTeam1Score) + ' ' + str(avgTeam2Score))
-    #print('win rate: ' + str(winRateTeam1) + ' ' + str(1-winRateTeam1))
+    avgTeam2Score = sum(team2Total)/len(team2Total)
+    winTeam1 = [team1Total[i]>team2Total[i] for i in range(len(team1Total))]
+    winRateTeam1 = sum(winTeam1)*1.0/len(team1Total)
+    print('avg scores: ' + str(avgTeam1Score) + ' ' + str(avgTeam2Score))
+    print('win rate: ' + str(winRateTeam1) + ' ' + str(1-winRateTeam1))
 
     
     #print result[:2]
