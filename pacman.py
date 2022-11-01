@@ -125,6 +125,7 @@ class GameState:
         if agentIndex < numPacman:
             state.data.scoreChange += -TIME_PENALTY # Penalty for waiting around
             state.data.scores[pacmanInfo['team']] += -TIME_PENALTY
+            state.data.agentScores[agentIndex] += -TIME_PENALTY
         else:
             GhostRules.decrementTimer( state.data.agentStates[agentIndex] )
 
@@ -136,6 +137,7 @@ class GameState:
         state.data.score += state.data.scoreChange
         if agentIndex < numPacman:
             state.data.scores[pacmanInfo['team']] += state.data.scoreChange
+            state.data.agentScores[agentIndex] += state.data.scoreChange
         GameState.explored.add(self)
         GameState.explored.add(state)
         return state
@@ -201,6 +203,9 @@ class GameState:
     
     def getTeamScore(self, team):
         return self.data.scores[team]
+    
+    def getPacmanScore(self, agentIndex):
+        return self.data.agentScores[agentIndex]
 
     def getCapsules(self):
         """
@@ -526,6 +531,7 @@ class GhostRules:
         if ghostState.scaredTimer > 0:
             state.data.scoreChange += 200
             state.data.scores[ team_map[pacmanIndex] ] += 200
+            state.data.agentScores[ pacmanIndex ] += 200
             GhostRules.placeGhost(state, ghostState)
             ghostState.scaredTimer = 0
             # Added for first-person
@@ -534,11 +540,13 @@ class GhostRules:
             state.data.deadPacmans.append(pacmanIndex)
             state.data.agentStates[pacmanIndex].alive = False
             state.data.scores[ team_map[pacmanIndex] ] -= 50
+            state.data.agentScores[ pacmanIndex ] -= 50
             #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):
                 #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
                 state.data.scores[ team_map[pacmanIndex] ] -= 500
+                state.data.agentScores[ pacmanIndex ] -= 500
                 state.data._lose = True
             
             # if not state.data._win and len(state.data.deadPacmans)==numPacman:
