@@ -4,3 +4,9 @@ If agent shuffling is done successfully, then MCTS
 might need some fixings, as it assumed, that every-
 time after the last pacman some ghost will be encou-
 ntered.
+
+Pacman parameter - no. of food particles consumed : int
+
+Pacman parameter - Amount of resources (left) : int
+
+Pacman parameter -  is Sensor Assist : bool
