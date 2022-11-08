@@ -976,7 +976,8 @@ if __name__ == '__main__':
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
     
-    # par(0)
+    par(0)
+    exit(0)
     
     print("save = " + str(save))
     for i in range(args['numGames']):
