@@ -432,6 +432,7 @@ class GameStateData:
             self.team1 = self.copyTeam1( prevState.team1 )
             self.team2 = self.copyTeam2( prevState.team2 )
             self.biasedGhost = prevState.biasedGhost
+            self.agentScores = self.copyAgentScores( prevState.agentScores )
 
         self._foodEaten = None
         self._foodAdded = None
@@ -457,6 +458,9 @@ class GameStateData:
     
     def copyTeam2( self, team2 ):
         return [i for i in team2]
+    
+    def copyAgentScores( self, agentScores ):
+        return [ score for score in agentScores ]
 
     def copyAgentStates( self, agentStates ):
         copiedStates = []
@@ -562,6 +566,7 @@ class GameStateData:
         self.layout = layout
         self.score = 0
         self.scores = [0]*nteams # scores[i] -> score for team-i
+        self.agentScores = [0]*layout.numPacman
         self.scoreChange = 0
         self.numPacman = layout.numPacman
         self.team1 = team1
@@ -809,6 +814,7 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
+            # print(self.state.data.agentScores)
             # positions = self.state.getAllAgentPositions()
             # print positions, self.state.data.scores, self.state.data.deadPacmans
 

@@ -54,6 +54,7 @@ import  cPickle
 from datetime import datetime, timedelta
 import os
 import traceback
+from ast import literal_eval
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -124,6 +125,7 @@ class GameState:
         if agentIndex < numPacman:
             state.data.scoreChange += -TIME_PENALTY # Penalty for waiting around
             state.data.scores[pacmanInfo['team']] += -TIME_PENALTY
+            state.data.agentScores[agentIndex] += -TIME_PENALTY
         else:
             GhostRules.decrementTimer( state.data.agentStates[agentIndex] )
 
@@ -135,6 +137,7 @@ class GameState:
         state.data.score += state.data.scoreChange
         if agentIndex < numPacman:
             state.data.scores[pacmanInfo['team']] += state.data.scoreChange
+            state.data.agentScores[agentIndex] += state.data.scoreChange
         GameState.explored.add(self)
         GameState.explored.add(state)
         return state
@@ -200,6 +203,9 @@ class GameState:
     
     def getTeamScore(self, team):
         return self.data.scores[team]
+    
+    def getPacmanScore(self, agentIndex):
+        return self.data.agentScores[agentIndex]
 
     def getCapsules(self):
         """
@@ -525,6 +531,7 @@ class GhostRules:
         if ghostState.scaredTimer > 0:
             state.data.scoreChange += 200
             state.data.scores[ team_map[pacmanIndex] ] += 200
+            state.data.agentScores[ pacmanIndex ] += 200
             GhostRules.placeGhost(state, ghostState)
             ghostState.scaredTimer = 0
             # Added for first-person
@@ -533,11 +540,13 @@ class GhostRules:
             state.data.deadPacmans.append(pacmanIndex)
             state.data.agentStates[pacmanIndex].alive = False
             state.data.scores[ team_map[pacmanIndex] ] -= 50
+            state.data.agentScores[ pacmanIndex ] -= 50
             #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):
                 #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
                 state.data.scores[ team_map[pacmanIndex] ] -= 500
+                state.data.agentScores[ pacmanIndex ] -= 500
                 state.data._lose = True
             
             # if not state.data._win and len(state.data.deadPacmans)==numPacman:
@@ -657,8 +666,8 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System1Agent', noKeyboard)
-    pacman2Type = loadAgent('System1Agent', noKeyboard)
+    pacman1Type = loadAgent('System2Agent', noKeyboard)
+    pacman2Type = loadAgent('System2Agent', noKeyboard)
     pacman3Type = loadAgent('System1Agent', noKeyboard)
     pacman4Type = loadAgent('System1Agent', noKeyboard)
     pacman5Type = loadAgent('System1Agent', noKeyboard)
@@ -695,12 +704,12 @@ def readCommand( argv ):
     pacman7.team = 1
     pacman8.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2, pacman3, pacman4]#, pacman5, pacman6, pacman7, pacman8]
-    mas_args['nteams'] = 2
+    mas_args['pacmans'] = [pacman1, pacman2]#, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
+    mas_args['nteams'] = 1
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
     mas_args['biasedGhost'] = False
-    mas_args['shuffleTurns'] = True
+    mas_args['shuffleTurns'] = False
     mas_args['startingIndex'] = 0
     pacman1.numPacman = len(mas_args['pacmans'])
     pacman2.numPacman = len(mas_args['pacmans'])
@@ -814,15 +823,17 @@ def par(i):
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
-    row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
+    team1Total.append(scores[0])
+    #team2Total.append(scores[1])
     
     if save:
+        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
         if os.path.isfile(save_file):
             save_df = pd.read_csv(save_file)
         save_df = pd.concat([save_df, row], axis=0, sort=False)
         save_df.to_csv(save_file, index=False)
     
-    print scores, deadPacmans
+    print(scores, deadPacmans)
     elapsed_time = time.time() - start_time
     columns = ["time","score","result"]
     score = game.state.getScore()
@@ -933,6 +944,8 @@ if __name__ == '__main__':
     # name of the file to save report for
     # simulation session
     
+    team1Total = []
+    team2Total = []
     save = True
     if save:
         now = datetime.now()
@@ -942,7 +955,7 @@ if __name__ == '__main__':
         info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=2\nT1S1=1\nT2S1=1\nT1S2=0\nT2S2=0\nT1B1=0\nnG=1\nbiased_ghost=False\nshuffling=True\n'
+        info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=1\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
         f = open(info_file, 'w')
         f.write(info+'\n')
         f.close()
@@ -962,14 +975,25 @@ if __name__ == '__main__':
     # print range(args['numGames'])
     # pool = Pool(processes=14)
     # result = pool.map(par, range(args['numGames']))
-    # par(0)
-    print("save = " + str(save))
     
+    par(0)
+    exit(0)
+    
+    print("save = " + str(save))
     for i in range(args['numGames']):
+        print('sim-' + str(i+1))
         try:
             par(i)
         except:
             print('sim-' + str(i+1) + 'failed')
+    avgTeam1Score = sum(team1Total)/len(team1Total)
+    print('avg score: ' + str(avgTeam1Score))
+    #avgTeam2Score = sum(team2Total)/len(team2Total)
+    #winTeam1 = [team1Total[i]>team2Total[i] for i in range(len(team1Total))]
+    #winRateTeam1 = sum(winTeam1)*1.0/len(team1Total)
+    #print('avg scores: ' + str(avgTeam1Score) + ' ' + str(avgTeam2Score))
+    #print('win rate: ' + str(winRateTeam1) + ' ' + str(1-winRateTeam1))
+
     
     #print result[:2]
     #print len(result)

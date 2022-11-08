@@ -2,3 +2,4 @@
 *.csv
 aws_data/*
 reports/*
+.DS_Store
