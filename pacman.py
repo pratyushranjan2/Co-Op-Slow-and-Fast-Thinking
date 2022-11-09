@@ -586,6 +586,8 @@ def parseAgentArgs(str):
     return opts
 
 def readCommand( argv ):
+    global save
+    global save_file
     """
     Processes the command used to run pacman from the command line.
     """
@@ -643,8 +645,13 @@ def readCommand( argv ):
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
     parser.add_option('--fname', type='str',dest ='fname',
                       help='The name of the file(with extension) where the final game information is added')
+    parser.add_option('--conf', type='str',dest ='conf',
+                      help='config file')
 
+    
     options, otherjunk = parser.parse_args(argv)
+    if save:
+        save_file = 'reports/conf-' + str(options.conf) + '.csv'
     if len(otherjunk) != 0:
         raise Exception('Command line input not understood: ' + str(otherjunk))
     args = OrderedDict()
@@ -659,66 +666,43 @@ def readCommand( argv ):
     # if options.fname is None:
     #     print "Not storing final result, file not given"
 
+    conf_path = 'simulations/' + options.conf + '/conf.txt'
+    f = open(conf_path, 'r')
+    conf_txt = f.read()
+    f.close()
+
+    conf = literal_eval(conf_txt)
+
+    layout_root = 'simulations/' + str(options.conf) +'/'
+
     # Choose a layout
-    args['layout'] = layout.getLayout( options.layout )
+    args['layout'] = layout.getLayout( 'layout', root=layout_root )
     if args['layout'] == None: raise Exception("The layout " + options.layout + " cannot be found")
 
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System2Agent', noKeyboard)
-    pacman2Type = loadAgent('System2Agent', noKeyboard)
-    pacman3Type = loadAgent('System1Agent', noKeyboard)
-    pacman4Type = loadAgent('System1Agent', noKeyboard)
-    pacman5Type = loadAgent('System1Agent', noKeyboard)
-    pacman6Type = loadAgent('System1Agent', noKeyboard)
-    pacman7Type = loadAgent('System1Agent', noKeyboard)
-    pacman8Type = loadAgent('System1Agent', noKeyboard)
+    pacmanTypes = [loadAgent(type, noKeyboard) for type in conf['agentTypes']]
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
-    pacman1 = pacman1Type(**agentOpts) # Instantiate Pacman1 with agentArgs
-    pacman2 = pacman2Type(**agentOpts) # Instantiate Pacman2 with agentArgs
-    pacman3 = pacman3Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman4 = pacman4Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman5 = pacman5Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman6 = pacman6Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman7 = pacman7Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman8 = pacman8Type(**agentOpts) # Instantiate Pacman3 with agentArgs
-    pacman1.index = 0
-    pacman2.index = 1
-    pacman3.index = 2
-    pacman4.index = 3
-    pacman5.index = 4
-    pacman6.index = 5
-    pacman7.index = 6
-    pacman8.index = 7
-    pacman1.team = 0
-    pacman2.team = 0
-    pacman3.team = 1
-    pacman4.team = 1
-    pacman5.team = 1
-    pacman6.team = 1
-    pacman7.team = 1
-    pacman8.team = 1
+    pacmans = [pacmanType(**agentOpts) for pacmanType in pacmanTypes]
+    teams = conf['teams']
+    for i, pacman in enumerate(pacmans):
+        pacman.index = i
+        pacman.team = teams[i]
+        pacman.numPacman = len(pacmans)
+
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]#, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
-    mas_args['nteams'] = 1
+    mas_args['pacmans'] = pacmans
+    mas_args['nteams'] = conf['nTeams']
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
-    mas_args['biasedGhost'] = False
-    mas_args['shuffleTurns'] = False
+    mas_args['biasedGhost'] = conf['biasedGhost']
+    mas_args['shuffleTurns'] = conf['shuffling']
     mas_args['startingIndex'] = 0
-    pacman1.numPacman = len(mas_args['pacmans'])
-    pacman2.numPacman = len(mas_args['pacmans'])
-    pacman3.numPacman = len(mas_args['pacmans'])
-    pacman4.numPacman = len(mas_args['pacmans'])
-    pacman5.numPacman = len(mas_args['pacmans'])
-    pacman6.numPacman = len(mas_args['pacmans'])
-    pacman7.numPacman = len(mas_args['pacmans'])
-    pacman8.numPacman = len(mas_args['pacmans'])
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -803,6 +787,7 @@ def replayGame( layout, actions, display ):
 
 def par(i):
     global save_df
+    global save_file
     layout, pacman, ghosts, display, numGames, record, catchExceptions, timeout, numTraining = [i[1] for i in args.items()]
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
@@ -824,7 +809,7 @@ def par(i):
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     team1Total.append(scores[0])
-    #team2Total.append(scores[1])
+    team2Total.append(scores[1])
     
     if save:
         row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
@@ -946,20 +931,26 @@ if __name__ == '__main__':
     
     team1Total = []
     team2Total = []
-    save = True
-    if save:
-        now = datetime.now()
-        save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
-                    '_' + \
-                    str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
-        info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
-                    '_' + \
-                    str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=1\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
-        f = open(info_file, 'w')
-        f.write(info+'\n')
-        f.close()
-        save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+
+    save = False
+    save_file = '' # set in readCommand()
+    # save = False
+    # if save:
+    #     now = datetime.now()
+    #     save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+    #                 '_' + \
+    #                 str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+    #     save_file = 'S2_test_Nov9.csv'
+    #     info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
+    #                 '_' + \
+    #                 str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
+    #     info_file = 'S2_test_Nov9.txt'
+    #     info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=2\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
+    #     if not os.path.isfile(info_file):
+    #         f = open(info_file, 'w')
+    #         f.write(info+'\n')
+    #         f.close()
+    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
 
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance

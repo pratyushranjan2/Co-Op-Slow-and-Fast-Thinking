@@ -816,7 +816,7 @@ class Game:
             # Print some info 
             # print(self.state.data.agentScores)
             # positions = self.state.getAllAgentPositions()
-            # print positions, self.state.data.scores, self.state.data.deadPacmans
+            # print agent.index, positions, self.state.data.scores, self.state.data.deadPacmans
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
