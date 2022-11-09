@@ -643,6 +643,8 @@ def readCommand( argv ):
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
     parser.add_option('--fname', type='str',dest ='fname',
                       help='The name of the file(with extension) where the final game information is added')
+    parser.add_option('--config', type='str',dest ='config',
+                      help='config file', default='0')
 
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
@@ -659,6 +661,7 @@ def readCommand( argv ):
     # if options.fname is None:
     #     print "Not storing final result, file not given"
 
+    print('config file name = ' + str(options.config))
     # Choose a layout
     args['layout'] = layout.getLayout( options.layout )
     if args['layout'] == None: raise Exception("The layout " + options.layout + " cannot be found")
@@ -666,8 +669,8 @@ def readCommand( argv ):
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
     pacmanType = loadAgent(options.pacman, noKeyboard)
-    pacman1Type = loadAgent('System2Agent', noKeyboard)
-    pacman2Type = loadAgent('System2Agent', noKeyboard)
+    pacman1Type = loadAgent('System1Agent', noKeyboard)
+    pacman2Type = loadAgent('System1Agent', noKeyboard)
     pacman3Type = loadAgent('System1Agent', noKeyboard)
     pacman4Type = loadAgent('System1Agent', noKeyboard)
     pacman5Type = loadAgent('System1Agent', noKeyboard)
@@ -696,7 +699,7 @@ def readCommand( argv ):
     pacman7.index = 6
     pacman8.index = 7
     pacman1.team = 0
-    pacman2.team = 0
+    pacman2.team = 1
     pacman3.team = 1
     pacman4.team = 1
     pacman5.team = 1
@@ -704,8 +707,8 @@ def readCommand( argv ):
     pacman7.team = 1
     pacman8.team = 1
     args['pacman'] = pacman
-    mas_args['pacmans'] = [pacman1, pacman2]#, pacman3, pacman4, pacman5, pacman6, pacman7, pacman8]
-    mas_args['nteams'] = 1
+    mas_args['pacmans'] = [pacman1, pacman2, pacman3]#, pacman4, pacman5]#, pacman6, pacman7, pacman8]
+    mas_args['nteams'] = 2
     numPacman = len(mas_args['pacmans'])
     mas_args['numPacman'] = numPacman
     mas_args['biasedGhost'] = False
@@ -803,6 +806,7 @@ def replayGame( layout, actions, display ):
 
 def par(i):
     global save_df
+    global save_file
     layout, pacman, ghosts, display, numGames, record, catchExceptions, timeout, numTraining = [i[1] for i in args.items()]
     pacmans = mas_args['pacmans']
     numPacman = mas_args['numPacman']
@@ -824,7 +828,7 @@ def par(i):
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
     scores, deadPacmans, steps_alive, is_win = game.run()
     team1Total.append(scores[0])
-    #team2Total.append(scores[1])
+    team2Total.append(scores[1])
     
     if save:
         row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win]})
@@ -946,19 +950,22 @@ if __name__ == '__main__':
     
     team1Total = []
     team2Total = []
-    save = True
+    save = False
     if save:
         now = datetime.now()
         save_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.csv'
+        save_file = 'S2_test_Nov9.csv'
         info_file = 'reports/' + str(now.day) + '-' + str(now.month) + '-' + str(now.year) + \
                     '_' + \
                     str(now.hour) + '.' + str(now.minute) + '.' + str(now.second) + '.txt'
-        info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=1\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
-        f = open(info_file, 'w')
-        f.write(info+'\n')
-        f.close()
+        info_file = 'S2_test_Nov9.txt'
+        info = 'nT1=2\nnT2=0\nT1S1=0\nT2S1=0\nT1S2=2\nT2S2=0\nT1B1=0\nnG=2\nbiased_ghost=False\nshuffling=False\n'
+        if not os.path.isfile(info_file):
+            f = open(info_file, 'w')
+            f.write(info+'\n')
+            f.close()
         save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
 
     # If code is ran parallelly using Poll, then logs will cause
