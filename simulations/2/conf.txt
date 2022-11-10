@@ -1,0 +1,8 @@
+{
+    'exp_details': '6vs6 1 blocking in team-1',
+    'agentTypes': ['BlockingAgent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent'],
+    'teams': [0,0,0,0,0,0,1,1,1,1,1,1],
+    'nTeams': 2,
+    'biasedGhost': False,
+    'shuffling': True,
+}
