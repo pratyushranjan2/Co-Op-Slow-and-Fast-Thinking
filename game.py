@@ -843,4 +843,4 @@ class Game:
                     return
         self.display.finish()
 
-        return self.state.data.scores, self.state.data.deadPacmans, self.steps_alive, self.state.data._win
+        return self.state.data.scores, self.state.data.deadPacmans, self.steps_alive, self.state.data._win, self.state.data.agentScores
