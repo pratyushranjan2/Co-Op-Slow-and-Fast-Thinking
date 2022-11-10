@@ -1,6 +1,6 @@
 {
     'exp_details': 'sample experiment',
-    'agentTypes': ['System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent'],
+    'agentTypes': ['ProximityBlockingAgent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent'],
     'teams': [0,0,0,0,0,0,1,1,1,1,1,1],
     'nTeams': 2,
     'biasedGhost': False,

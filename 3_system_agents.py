@@ -89,14 +89,7 @@ class System1Agent(Agent): #system 1 is capable of gameplay on its own
         return self.q_learning_agent.getAction(gameState, pacmanInfo)
 
 class BlockingAgent(Agent):
-    def __init__(self):
-        self.sys1 = System1Agent()
-        self.activateSys1 = False
-    
     def getAction(self, gameState, pacmanInfo):
-        if self.activateSys1:
-            return self.sys1.getAction(gameState, pacmanInfo)
-        
         pacmanIndex = pacmanInfo['agentIndex']
         legalActions = gameState.getLegalActions(pacmanIndex, pacmanInfo)
 
@@ -118,6 +111,24 @@ class BlockingAgent(Agent):
                                     if dist == bestDist]
         
         return random.choice(bestActions)
+
+class ProximityBlockingAgent(BlockingAgent, object):
+    def __init__(self):
+        self.escapeSys = System1Agent()
+    
+    def getAction(self, gameState, pacmanInfo):
+        pacmanIndex = pacmanInfo['agentIndex']
+        newPos = gameState.getPacmanPosition(pacmanIndex)
+        proximity_to_ghosts = 0
+        
+        for ghost_state in gameState.getGhostPositions():
+            distance = util.manhattanDistance(newPos, ghost_state)
+            if distance <= 2:
+                proximity_to_ghosts += 1
+        if proximity_to_ghosts > 0:
+            return self.escapeSys.getAction(gameState, pacmanInfo)
+        
+        return super(ProximityBlockingAgent, self).getAction(gameState, pacmanInfo)
 
 class System2Agent(Agent): #system 2 is capable of gameplay on its own
     """
