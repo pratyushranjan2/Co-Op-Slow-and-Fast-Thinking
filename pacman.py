@@ -529,6 +529,7 @@ class GhostRules:
 
     def collide( state, ghostState, agentIndex, pacmanIndex, numPacman, team_map):
         if ghostState.scaredTimer > 0:
+            print('scaredTimer > 0')
             state.data.scoreChange += 200
             state.data.scores[ team_map[pacmanIndex] ] += 200
             state.data.agentScores[ pacmanIndex ] += 200
@@ -932,7 +933,7 @@ if __name__ == '__main__':
     team1Total = []
     team2Total = []
 
-    save = True
+    save = False
     save_file = '' # set in readCommand()
     # save = False
     # if save:

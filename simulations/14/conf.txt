@@ -1,0 +1,8 @@
+{
+    'exp_details': 'equal power 6vs6 allS1 shuffling',
+    'agentTypes': ['System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent'],
+    'teams': [0,0,0,0,0,0,1,1,1,1,1,1],
+    'nTeams': 2,
+    'biasedGhost': False,
+    'shuffling': False,
+}
