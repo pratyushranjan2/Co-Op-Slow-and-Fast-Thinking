@@ -445,7 +445,7 @@ class PacmanRules:
             # TODO: cache numFood?
             numFood = state.getNumFood()
             if numFood == 0 and not state.data._lose:
-                state.data.scoreChange += 500
+                #state.data.scoreChange += 500
                 state.data._win = True
         # Eat capsule
         if( position in state.getCapsules() ):
@@ -540,14 +540,14 @@ class GhostRules:
         else:
             state.data.deadPacmans.append(pacmanIndex)
             state.data.agentStates[pacmanIndex].alive = False
-            state.data.scores[ team_map[pacmanIndex] ] -= 50
-            state.data.agentScores[ pacmanIndex ] -= 50
+            state.data.scores[ team_map[pacmanIndex] ] -= 20
+            state.data.agentScores[ pacmanIndex ] -= 20
             #print "Pacman #"+str(pacmanIndex)+" died"
             
             if state.allDeadIn(team_map[pacmanIndex]):
                 #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
-                state.data.scores[ team_map[pacmanIndex] ] -= 500
-                state.data.agentScores[ pacmanIndex ] -= 500
+                # state.data.scores[ team_map[pacmanIndex] ] -= 500
+                # state.data.agentScores[ pacmanIndex ] -= 500
                 state.data._lose = True
             
             # if not state.data._win and len(state.data.deadPacmans)==numPacman:
