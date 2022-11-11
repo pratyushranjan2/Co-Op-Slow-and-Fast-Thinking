@@ -933,7 +933,7 @@ if __name__ == '__main__':
     team1Total = []
     team2Total = []
 
-    save = False
+    save = True
     save_file = '' # set in readCommand()
     # save = False
     # if save:
