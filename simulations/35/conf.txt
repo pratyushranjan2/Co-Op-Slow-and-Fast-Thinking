@@ -1,0 +1,8 @@
+{
+    'exp_details': 'S1 for 2 agents in mas2 layout. For comparision with S2(2) and S2(3)',
+    'agentTypes': ['System1Agent', 'System1Agent'],
+    'teams': [0,0],
+    'nTeams': 1,
+    'biasedGhost': False,
+    'shuffling': False,
+}
