@@ -1,0 +1,8 @@
+{
+    'exp_details': 'S2 with nRandom=3',
+    'agentTypes': ['System2Agent', 'System2Agent'],
+    'teams': [0,0],
+    'nTeams': 1,
+    'biasedGhost': False,
+    'shuffling': False,
+}
