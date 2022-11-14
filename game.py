@@ -814,7 +814,7 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
-            print(self.state.data.agentScores)
+            # print(self.state.data.agentScores)
             # positions = self.state.getAllAgentPositions()
             # print agent.index, positions, self.state.data.scores, self.state.data.deadPacmans
             # if agent.index == 0:
