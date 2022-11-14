@@ -814,11 +814,11 @@ class Game:
                     self.steps_alive[i] += 1
             
             # Print some info 
-            # print(self.state.data.agentScores)
+            print(self.state.data.agentScores)
             # positions = self.state.getAllAgentPositions()
             # print agent.index, positions, self.state.data.scores, self.state.data.deadPacmans
-            if agent.index == 0:
-                print(self.state.data.agentStates[agent.index].configuration.pos, self.state.data.agentStates[agent.index].configuration.direction)
+            # if agent.index == 0:
+            #     print(self.state.data.agentStates[agent.index].configuration.pos, self.state.data.agentStates[agent.index].configuration.direction)
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)

@@ -1,0 +1,9 @@
+{
+    'exp_details': '2vs2 System0',
+    'agentTypes': ['System0Agent', 'System0Agent', 'System1Agent', 'System1Agent'],
+    'teams': [0,0,1,1],
+    'nTeams': 2,
+    'biasedGhost': False,
+    'shuffling': False,
+    'S0_exp_id': 14
+}

@@ -138,10 +138,6 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
     def __init__(self, evalFn = 'betterEvaluationFunction', depth = '2'):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
-        with open('network_weights.pkl', 'rb') as f:
-            self.feat_weights = pickle.load(f)
-        with open('features.pkl', 'rb') as f:
-            self.feat_extractor = pickle.load(f)
 
     def getAction(self, gameState, pacmanInfo):
         # print("Game state type:",type(gameState))
@@ -205,61 +201,57 @@ class System2Agent(Agent): #system 2 is capable of gameplay on its own
         return action
 
 class System0Agent(Agent):
-    def __init__(self,sys1 = Agent(),sys2 = Agent()):
+    def __init__(self, exp_id):
         self.system_1_model = System1Agent()
         self.system_2_model = System2Agent()
-        self.count = 0
-    def getAction(self,gameState):
-        # return self.system_1_model.getAction(gameState)
-        #GHOST PROXIMTIY
-        #######################################
+        self.exp = exp_id
+        self.threshF = 0.5 # threshold factor
+        self.expActions = [
+            [self.system_1_model, self.system_1_model, self.system_1_model, self.system_1_model],
+            [self.system_1_model, self.system_1_model, self.system_1_model, self.system_2_model],
+            [self.system_1_model, self.system_1_model, self.system_2_model, self.system_1_model],
+            [self.system_1_model, self.system_2_model, self.system_1_model, self.system_1_model],
+            [self.system_2_model, self.system_1_model, self.system_1_model, self.system_1_model],
+            [self.system_2_model, self.system_2_model, self.system_1_model, self.system_1_model],
+            [self.system_2_model, self.system_1_model, self.system_2_model, self.system_1_model],
+            [self.system_2_model, self.system_1_model, self.system_1_model, self.system_2_model],
+            [self.system_1_model, self.system_2_model, self.system_2_model, self.system_1_model],
+            [self.system_1_model, self.system_2_model, self.system_1_model, self.system_2_model],
+            [self.system_1_model, self.system_1_model, self.system_2_model, self.system_2_model],
+            [self.system_1_model, self.system_2_model, self.system_2_model, self.system_2_model],
+            [self.system_2_model, self.system_1_model, self.system_2_model, self.system_2_model],
+            [self.system_2_model, self.system_2_model, self.system_1_model, self.system_2_model],
+            [self.system_2_model, self.system_2_model, self.system_2_model, self.system_1_model],
+            [self.system_2_model, self.system_2_model, self.system_2_model, self.system_2_model],
+        ]
+    
+    def getAction(self, gameState, pacmanInfo):
         newPos = gameState.getPacmanPosition()
-        # distances_to_ghosts = 1
-        # proximity_to_ghosts = 0
-        # for ghost_state in gameState.getGhostPositions():
-        #     distance = util.manhattanDistance(newPos, ghost_state)
-        #     distances_to_ghosts += distance
-        #     if distance <= 2:
-        #         proximity_to_ghosts += 1
-        # if proximity_to_ghosts > 0:
-        #     move = self.system_2_model.getAction(gameState)
-        # else:
-        #     move = self.system_1_model.getAction(gameState)
-        #########################################
-        #HEAT MAP
-        #######################################
-        # distances_to_ghosts = 1
-        # proximity_to_ghosts = 0
-        # sys2_positions = [(1,5) , (2,5) , (4,5) , (1,4), (9,5),(2,4),(1,1),(5,3)]
-        # sys1_positions = [(14,5) , (16,4), (20,4),(20,2),(20,1)]
-        # sys0_positions = [(16,5),(17,5),(16,3),(1,5),(2,4),(4,5),(5,5),(20,5),(1,5),(1,4)]
-        # if newPos not in sys0_positions:
-        #     move = self.system_2_model.getAction(gameState)
-        # else:
-        #     move = self.system_1_model.getAction(gameState)
-        # for ghost_state in gameState.getGhostPositions():
-        #     distance = util.manhattanDistance(newPos, ghost_state)
-        #     distances_to_ghosts += distance
-        #     if distance <= 2:
-        #         proximity_to_ghosts += 1
-        # if proximity_to_ghosts > 0 or newPos not in sys0_positions:
-        # if proximity_to_ghosts > 0:
-        #     move = self.system_2_model.getAction(gameState)
-        # else:
-        #     move = self.system_1_model.getAction(gameState)
-        #########################################
-
-        # self.count = self.count + 1
-        # if(self.system_1_model.getAction(gameState) != self.system_2_model.getAction(gameState)):
-        #     print "Made a choice"
-        # print "SYSTEM1:" + self.system_1_model.getAction(gameState)
-        # print "SYSTEM2:" + self.system_2_model.getAction(gameState)
-        # print "Count:" + str(self.count)
-        food = gameState.getNumFood()
-        if food > 5:
-            move = self.system_2_model.getAction(gameState)
+        proximity_to_ghosts = 0
+        for ghost_state in gameState.getGhostPositions():
+            distance = util.manhattanDistance(newPos, ghost_state)
+            if distance <= 2:
+                proximity_to_ghosts += 1
+        if proximity_to_ghosts > 0:
+            move = self.system_2_model.getAction(gameState, pacmanInfo)
         else:
-            move = self.system_1_model.getAction(gameState)
+            N1 = len(gameState.data.team1)
+            N2 = len(gameState.data.team2)
+            alive1 = len(gameState.getPacmansAlive(0))
+            alive2 = len(gameState.getPacmansAlive(1))
+
+            if alive1 >= self.threshF * N1 and alive2 >= self.threshF * N2:
+                move = self.expActions[self.exp][0].getAction(gameState, pacmanInfo)
+            
+            elif alive1 >= self.threshF * N1 and alive2 < self.threshF * N2:
+                move = self.expActions[self.exp][1].getAction(gameState, pacmanInfo)
+            
+            elif alive1 < self.threshF * N1 and alive2 >= self.threshF * N2:
+                move = self.expActions[self.exp][2].getAction(gameState, pacmanInfo)
+            
+            else:
+                move = self.expActions[self.exp][3].getAction(gameState, pacmanInfo)
+
         return move
 
 class ProximityAgent(System0Agent):
