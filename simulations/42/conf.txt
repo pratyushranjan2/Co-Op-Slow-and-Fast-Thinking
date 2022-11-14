@@ -1,0 +1,8 @@
+{
+    'exp_details': '6vs3 1 ProximityBlockingAgent',
+    'agentTypes': ['System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'System1Agent', 'ProximityBlockingAgent', 'System1Agent', 'System1Agent', 'System1Agent'],
+    'teams': [0,0,0,0,0,0,1,1,1],
+    'nTeams': 2,
+    'biasedGhost': False,
+    'shuffling': False,
+}

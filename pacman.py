@@ -176,6 +176,11 @@ class GameState:
         return [ self.data.agentStates[i].getPosition() for i in pacman_ids\
                     if i not in ignore ]
     
+    def getPacmansAlive( self, team ):
+        if team==0:
+            return [pacmanIndex for pacmanIndex in self.data.team1 if pacmanIndex not in self.data.deadPacmans]
+        return [pacmanIndex for pacmanIndex in self.data.team2 if pacmanIndex not in self.data.deadPacmans]
+    
     def getAllAgentPositions(self):
         return [ self.data.agentStates[i].getPosition() for i in range(len(self.data.agentStates)) ]
 
@@ -689,7 +694,12 @@ def readCommand( argv ):
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
     pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
-    pacmans = [pacmanType(**agentOpts) for pacmanType in pacmanTypes]
+    pacmans = []
+    for pacmanType in pacmanTypes:
+        if str(pacmanType) == '3_system_agents.System0Agent':
+            pacmans.append( pacmanType(int(conf['S0_exp_id'])) )
+        else:
+            pacmans.append(pacmanType(**agentOpts))
     teams = conf['teams']
     for i, pacman in enumerate(pacmans):
         pacman.index = i
