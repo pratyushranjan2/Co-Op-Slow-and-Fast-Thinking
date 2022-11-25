@@ -697,7 +697,7 @@ def readCommand( argv ):
     pacmans = []
     for pacmanType in pacmanTypes:
         if str(pacmanType) == '3_system_agents.System0Agent':
-            pacmans.append( pacmanType(int(conf['S0_exp_id'])) )
+            pacmans.append( pacmanType(conf['s0_settings']) )
         else:
             pacmans.append(pacmanType(**agentOpts))
     teams = conf['teams']
