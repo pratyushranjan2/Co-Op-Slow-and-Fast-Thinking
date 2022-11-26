@@ -436,6 +436,7 @@ class PacmanRules:
         nearest = nearestPoint( next )
         if manhattanDistance( nearest, next ) <= 0.5 :
             # Remove food
+            state.data.foodEaten[agentIndex] += 1
             PacmanRules.consume( nearest, state )
     applyAction = staticmethod( applyAction )
 
@@ -549,17 +550,10 @@ class GhostRules:
             state.data.agentScores[ pacmanIndex ] -= 20
             #print "Pacman #"+str(pacmanIndex)+" died"
             
-            if state.allDeadIn(team_map[pacmanIndex]):
-                #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
-                # state.data.scores[ team_map[pacmanIndex] ] -= 500
-                # state.data.agentScores[ pacmanIndex ] -= 500
+            # End game only if both teams are eliminated
+            if state.allDeadIn(0) and state.allDeadIn(1):
                 state.data._lose = True
             
-            # if not state.data._win and len(state.data.deadPacmans)==numPacman:
-            #     print "all pacman dead"
-            #     state.data.scoreChange -= 500
-            #     state.data.scores[ team_map[pacmanIndex] ] -= 500
-            #     state.data._lose = True
     collide = staticmethod( collide )
 
     def canKill( pacmanPosition, ghostPosition ):
@@ -943,7 +937,7 @@ if __name__ == '__main__':
     team1Total = []
     team2Total = []
 
-    save = True
+    save = False
     save_file = '' # set in readCommand()
     # save = False
     # if save:
