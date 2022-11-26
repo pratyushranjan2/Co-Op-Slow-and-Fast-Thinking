@@ -436,6 +436,7 @@ class PacmanRules:
         nearest = nearestPoint( next )
         if manhattanDistance( nearest, next ) <= 0.5 :
             # Remove food
+            state.data.foodEaten[agentIndex] += 1
             PacmanRules.consume( nearest, state )
     applyAction = staticmethod( applyAction )
 
@@ -549,17 +550,10 @@ class GhostRules:
             state.data.agentScores[ pacmanIndex ] -= 20
             #print "Pacman #"+str(pacmanIndex)+" died"
             
-            if state.allDeadIn(team_map[pacmanIndex]):
-                #print "Team #" + str(team_map[pacmanIndex]) + " eliminated"
-                # state.data.scores[ team_map[pacmanIndex] ] -= 500
-                # state.data.agentScores[ pacmanIndex ] -= 500
+            # End game only if both teams are eliminated
+            if state.allDeadIn(0) and state.allDeadIn(1):
                 state.data._lose = True
             
-            # if not state.data._win and len(state.data.deadPacmans)==numPacman:
-            #     print "all pacman dead"
-            #     state.data.scoreChange -= 500
-            #     state.data.scores[ team_map[pacmanIndex] ] -= 500
-            #     state.data._lose = True
     collide = staticmethod( collide )
 
     def canKill( pacmanPosition, ghostPosition ):
@@ -818,12 +812,12 @@ def par(i):
         gameDisplay = display
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
-    scores, deadPacmans, steps_alive, is_win, agentScores = game.run()
+    scores, deadPacmans, steps_alive, food_eaten, agentScores = game.run()
     # team1Total.append(scores[0])
     # team2Total.append(scores[1])
     
     if save:
-        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win], 'agentScores': [agentScores]})
+        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'food_eaten': [food_eaten], 'agentScores': [agentScores]})
         if os.path.isfile(save_file):
             save_df = pd.read_csv(save_file)
         save_df = pd.concat([save_df, row], axis=0, sort=False)
@@ -961,7 +955,7 @@ if __name__ == '__main__':
     #         f = open(info_file, 'w')
     #         f.write(info+'\n')
     #         f.close()
-    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'food_eaten', 'agentScores'])
 
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
