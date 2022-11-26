@@ -812,12 +812,12 @@ def par(i):
         gameDisplay = display
         rules.quiet = False
     game = rules.newGame( layout, pacman, pacmans, numPacman, nteams, biasedGhost, shuffleTurns, startingIndex, ghosts, gameDisplay, beQuiet, catchExceptions)
-    scores, deadPacmans, steps_alive, is_win, agentScores = game.run()
+    scores, deadPacmans, steps_alive, food_eaten, agentScores = game.run()
     # team1Total.append(scores[0])
     # team2Total.append(scores[1])
     
     if save:
-        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'is_win': [is_win], 'agentScores': [agentScores]})
+        row = pd.DataFrame({'scores': [scores], 'deadPacmans': [deadPacmans], 'steps_alive': [steps_alive], 'food_eaten': [food_eaten], 'agentScores': [agentScores]})
         if os.path.isfile(save_file):
             save_df = pd.read_csv(save_file)
         save_df = pd.concat([save_df, row], axis=0, sort=False)
@@ -937,7 +937,7 @@ if __name__ == '__main__':
     team1Total = []
     team2Total = []
 
-    save = False
+    save = True
     save_file = '' # set in readCommand()
     # save = False
     # if save:
@@ -955,7 +955,7 @@ if __name__ == '__main__':
     #         f = open(info_file, 'w')
     #         f.write(info+'\n')
     #         f.close()
-    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'is_win'])
+    save_df = pd.DataFrame(columns=['scores', 'deadPacmans', 'steps_alive', 'food_eaten', 'agentScores'])
 
     # If code is ran parallelly using Poll, then logs will cause
     # confusion. To properly interpret logs, just run one instance
