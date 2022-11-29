@@ -242,13 +242,13 @@ class System0Agent(Agent):
         alive1 = len(gameState.getPacmansAlive(0))
         alive2 = len(gameState.getPacmansAlive(1))
 
-        if alive1 >= self.threshF * N1 and alive2 >= self.threshF * N2:
+        if alive1 > self.threshF * N1 and alive2 > self.threshF * N2:
             move = self.expActions[self.exp][0].getAction(gameState, pacmanInfo)
         
-        elif alive1 >= self.threshF * N1 and alive2 < self.threshF * N2:
+        elif alive1 > self.threshF * N1 and alive2 <= self.threshF * N2:
             move = self.expActions[self.exp][1].getAction(gameState, pacmanInfo)
         
-        elif alive1 < self.threshF * N1 and alive2 >= self.threshF * N2:
+        elif alive1 <= self.threshF * N1 and alive2 > self.threshF * N2:
             move = self.expActions[self.exp][2].getAction(gameState, pacmanInfo)
         
         else:
